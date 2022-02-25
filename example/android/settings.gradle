@@ -1,0 +1,9 @@
+include ':snapyr'
+include ':snapyr-samples:kotlin-sample'
+include ':snapyr-samples:sample'
+rootProject.name = 'SnapyrRnSdkExample'
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+include ':app'
+
+include ':reactnativesnapyrrnsdk'
+project(':reactnativesnapyrrnsdk').projectDir = new File(rootProject.projectDir, '../../android')
