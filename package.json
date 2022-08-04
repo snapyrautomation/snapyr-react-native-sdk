@@ -1,5 +1,5 @@
 {
-  "name": "react-native-snapyr-sdk",
+  "name": "@snapyr/react-native-sdk",
   "version": "1.0.1",
   "description": "Snapyr SDK for React Native",
   "main": "lib/commonjs/index",
@@ -37,13 +37,13 @@
     "android",
     "snapyr"
   ],
-  "repository": "https://github.com/snapyrautomation/react-native-snapyr-sdk",
+  "repository": "https://github.com/snapyrautomation/snapyr-react-native-sdk",
   "author": "Snapyr <devops@snapyr.com> (https://snapyr.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/snapyrautomation/react-native-snapyr-sdk/issues"
+    "url": "https://github.com/snapyrautomation/snapyr-react-native-sdk/issues"
   },
-  "homepage": "https://github.com/snapyrautomation/react-native-snapyr-sdk#readme",
+  "homepage": "https://github.com/snapyrautomation/snapyr-react-native-sdk#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
