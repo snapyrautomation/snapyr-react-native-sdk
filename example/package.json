@@ -9,6 +9,7 @@
     "start": "react-native start"
   },
   "dependencies": {
+    "@react-native-community/cli-tools": "^8.0.4",
     "react": "16.13.1",
     "react-native": "0.64.1"
   },
