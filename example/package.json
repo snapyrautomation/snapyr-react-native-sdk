@@ -1,6 +1,6 @@
 {
-  "name": "react-native-snapyr-sdk-example",
-  "description": "Example app for react-native-snapyr-sdk",
+  "name": "snapyr-react-native-sdk-example",
+  "description": "Example app for snapyr-react-native-sdk",
   "version": "0.0.1",
   "private": true,
   "scripts": {

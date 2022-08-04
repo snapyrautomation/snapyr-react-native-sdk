@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
-import { configure, identify, track } from 'react-native-snapyr-sdk';
+import { configure, identify, track } from 'snapyr-react-native-sdk';
 
 export default function App() {
   const result = 22;
@@ -19,7 +19,7 @@ export default function App() {
       console.log('identified react.native.app@withjam.com');
       await track('react-native-loaded', {
         rn_client_type: 'local',
-        project_name: 'react-native-snapyr-sdk',
+        project_name: 'snapyr-react-native-sdk',
         dev_mode: true,
       });
       console.log('tracked react-native-loaded');
