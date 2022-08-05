@@ -375,7 +375,7 @@ SPEC CHECKSUMS:
   boost-for-react-native: 39c7adb57c4e60d6c5479dd8623128eb5b3f0f2c
   DoubleConversion: cf9b38bf0b2d048436d9a82ad2abe1404f11e7de
   FBLazyVector: 7b423f9e248eae65987838148c36eec1dbfe0b53
-  FBReactNativeSpec: 23e17de1e5b18da4a18966af7d4d5922413eec54
+  FBReactNativeSpec: 7e76833f7a148bfca298f5e522c45743045e98e3
   glog: 73c2498ac6884b13ede40eda8228cb1eee9d9d62
   RCT-Folly: ec7a233ccc97cc556cf7237f0db1ff65b986f27c
   RCTRequired: ec2ebc96b7bfba3ca5c32740f5a0c6a014a274d2
@@ -388,7 +388,7 @@ SPEC CHECKSUMS:
   React-jsi: 5de8204706bd872b78ea646aee5d2561ca1214b6
   React-jsiexecutor: 124e8f99992490d0d13e0649d950d3e1aae06fe9
   React-jsinspector: 500a59626037be5b3b3d89c5151bc3baa9abf1a9
-  react-native-snapyr-rn-sdk: 8133f5d127e8186ec3c92779f899e729f5c145c6
+  react-native-snapyr-rn-sdk: b9dea314bb440a77652abe047025bf1e72fbf48f
   React-perflogger: aad6d4b4a267936b3667260d1f649b6f6069a675
   React-RCTActionSheet: fc376be462c9c8d6ad82c0905442fd77f82a9d2a
   React-RCTAnimation: ba0a1c3a2738be224a08092fa7f1b444ab77d309
@@ -406,4 +406,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 383d464264822fc5a2fd959b3cdc68491604a2b0
 
-COCOAPODS: 1.11.2
+COCOAPODS: 1.11.3

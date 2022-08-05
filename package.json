@@ -1,6 +1,6 @@
 {
   "name": "@snapyr/react-native-sdk",
-  "version": "1.0.1",
+  "version": "1.0.0-beta.0",
   "description": "Snapyr SDK for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -22,14 +22,15 @@
     "!**/__mocks__"
   ],
   "scripts": {
-    "test": "jest",
-    "typescript": "tsc --noEmit",
-    "lint": "eslint \"**/*.{js,ts,tsx}\"",
+    "bootstrap": "yarn example && yarn && yarn pods",
     "prepare": "bob build",
     "release": "release-it",
     "example": "yarn --cwd example",
     "pods": "cd example && pod-install --quiet",
-    "bootstrap": "yarn example && yarn && yarn pods"
+    "typescript:check": "tsc --noEmit",
+    "lint": "eslint . --ext .js,.ts,.tsx --fix",
+    "lint:check": "eslint . --ext .js,.ts,.tsx",
+    "test": "jest"
   },
   "keywords": [
     "react-native",
@@ -47,6 +48,7 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
+  "dependencies": {},
   "devDependencies": {
     "@commitlint/config-conventional": "^11.0.0",
     "@react-native-community/eslint-config": "^2.0.0",
@@ -98,6 +100,16 @@
     "plugins": {
       "@release-it/conventional-changelog": {
         "preset": "angular"
+      },
+      "hooks": {
+        "before:init": [
+          "git checkout main",
+          "git pull",
+          "yarn lint:check",
+          "yarn typescript:check"
+        ],
+        "after:bump": "yarn prepare",
+        "after:release": "echo Successfully released ${name} v${version} to ${repo.repository}."
       }
     }
   },
