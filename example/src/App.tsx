@@ -4,7 +4,7 @@ import { StyleSheet, View, Text } from 'react-native';
 import { configure, identify, track } from 'snapyr-react-native-sdk';
 
 export default function App() {
-  const result = 22;
+  const result = 224;
 
   React.useEffect(() => {
     console.log('configuring sdk');
