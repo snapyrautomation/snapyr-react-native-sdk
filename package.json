@@ -111,8 +111,7 @@
         "yarn typescript:check"
       ],
       "after:bump": [
-        "yarn",
-        "git add example/ios/Podfile.lock",
+        "yarn pods",
         "yarn prepare"
       ],
       "after:release": "echo Successfully released ${name} v${version} to ${repo.repository}."
