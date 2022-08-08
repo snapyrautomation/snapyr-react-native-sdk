@@ -9,15 +9,19 @@
     "start": "react-native start"
   },
   "dependencies": {
-    "@react-native-community/cli-tools": "^8.0.4",
-    "react": "18.2.0",
-    "react-native": "0.69.3",
-    "snapyr-react-native-sdk": "file:../src"
-  },
-  "devDependencies": {
     "@babel/core": "^7.12.10",
     "@babel/runtime": "^7.12.5",
+    "@react-native-community/cli-tools": "^8.0.4",
+    "@react-native-community/push-notification-ios": "^1.10.1",
+    "@types/react-native-push-notification": "^8.1.1",
+    "@types/react": "^18.0.16",
+    "@types/react-native": "0.69.5",
     "babel-plugin-module-resolver": "^4.0.0",
-    "metro-react-native-babel-preset": "^0.72.0"
-  }
+    "metro-react-native-babel-preset": "^0.72.0",
+    "react": "18.2.0",
+    "react-native": "0.69.3",
+    "react-native-push-notification": "^8.1.1",
+    "snapyr-react-native-sdk": "file:../src"
+  },
+  "devDependencies": {}
 }
