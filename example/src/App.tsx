@@ -10,7 +10,6 @@ export default function App() {
     console.log('configuring sdk');
     (async function () {
       const key = await configure('<write-key-here>', {
-        enableDevMode: true,
         trackApplicationLifecycleEvents: true,
         recordScreenViews: true,
       });
@@ -20,7 +19,6 @@ export default function App() {
       await track('react-native-loaded', {
         rn_client_type: 'local',
         project_name: 'snapyr-react-native-sdk',
-        dev_mode: true,
       });
       console.log('tracked react-native-loaded');
     })();

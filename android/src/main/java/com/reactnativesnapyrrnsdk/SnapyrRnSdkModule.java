@@ -45,7 +45,6 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void configure(String withKey, ReadableMap options, Promise promise) {
       Snapyr snapyr = new Snapyr.Builder(this.getReactApplicationContext().getApplicationContext(), withKey)
-      .enableDevEnvironment()
       .trackApplicationLifecycleEvents() // Enable this to record certain application events automatically
       .recordScreenViews() // Enable this to record screen views automatically
       .enableSnapyrPushHandling() // enable push for Android
