@@ -9,14 +9,14 @@ export default function App() {
   React.useEffect(() => {
     console.log('configuring sdk');
     (async function () {
-      const key = await configure('mTGaCfFmNEskJ4Bqz36mcOGnRt6OSz9r', {
+      const key = await configure('<write-key-here>', {
         enableDevMode: true,
         trackApplicationLifecycleEvents: true,
         recordScreenViews: true,
       });
       console.log('configured', key);
-      await identify('react.native.app@withjam.com');
-      console.log('identified react.native.app@withjam.com');
+      await identify('test@example.com');
+      console.log('identified test@example.com');
       await track('react-native-loaded', {
         rn_client_type: 'local',
         project_name: 'snapyr-react-native-sdk',
