@@ -48,6 +48,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
       .enableDevEnvironment()
       .trackApplicationLifecycleEvents() // Enable this to record certain application events automatically
       .recordScreenViews() // Enable this to record screen views automatically
+      .enableSnapyrPushHandling() // enable push for Android
       .build();
 
       // enable dev here
