@@ -28,3 +28,7 @@ export function identify(id: string, traits?: any): Promise<string> {
 export function track(eventName: string, properties?: any): Promise<string> {
   return SnapyrRnSdk.track(eventName, properties);
 }
+
+export function setPushNotificationToken(token: string) {
+ return SnapyrRnSdk.setPushNotificationToken(token);
+}

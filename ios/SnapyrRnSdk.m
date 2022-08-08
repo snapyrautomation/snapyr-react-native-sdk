@@ -45,4 +45,11 @@ RCT_EXPORT_METHOD(track:(NSString*)_event traits:(NSDictionary*)_traits)
     [[SnapyrSDK sharedSDK] track:_event properties:_traits];
 }
 
+RCT_EXPORT_METHOD(setPushNotificationToken:(NSString*)_token)
+{
+       NSLog(@"%@ tokenNSLOG", _token);
+      [[SnapyrSDK sharedSDK] setPushNotificationToken: _token];
+
+}
+
 @end
