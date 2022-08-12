@@ -34,63 +34,89 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
         return NAME;
     }
 
-
-    // Example method
     // See https://reactnative.dev/docs/native-modules-android
-    @ReactMethod
-    public void multiply(int a, int b, Promise promise) {
-        promise.resolve(a * b);
-    }
 
     @ReactMethod
     public void configure(String withKey, ReadableMap options, Promise promise) {
-      Snapyr snapyr = new Snapyr.Builder(this.getReactApplicationContext().getApplicationContext(), withKey)
-      .trackApplicationLifecycleEvents() // Enable this to record certain application events automatically
-      .recordScreenViews() // Enable this to record screen views automatically
-      .enableSnapyrPushHandling() // enable push for Android
-      .build();
-
-      // enable dev here
-
-      // Snapyr snapyr = builder.build();
-
-      // Set the initialized instance as a globally accessible instance.
       try {
+        Snapyr snapyr = new Snapyr.Builder(this.getReactApplicationContext().getApplicationContext(), withKey)
+        .flushQueueSize(1) // makes every event flush to network immediately
+        .trackApplicationLifecycleEvents() // Enable this to record certain application events automatically
+        .recordScreenViews() // Enable this to record screen views automatically
+        .enableSnapyrPushHandling() // enable push for Android
+        .build();
+
+        // enable dev here
+
+        // Snapyr snapyr = builder.build();
+
+        // Set the initialized instance as a globally accessible instance.
         Snapyr.setSingletonInstance(snapyr);
-      } catch(Exception ex) {
+        promise.resolve(withKey);
+      } catch(Exception e) {
         Log.d("Snapyr", "Config errored");
+        promise.reject("Error initializing Snapyr", e);
       }
-      promise.resolve(withKey);
     }
 
     @ReactMethod
     public void identify(String userId, ReadableMap traitsMap, Promise promise) {
-      Traits traits = new Traits();
-      if (!Objects.isNull(traitsMap)) {
-        traits.putAll(traitsMap.toHashMap());
+      try {
+        if (!Snapyr.Valid()) {
+          Log.d("Snapyr", "Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          promise.reject("Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          return;
+        }
+        
+        Traits traits = new Traits();
+        if (!Objects.isNull(traitsMap)) {
+          traits.putAll(traitsMap.toHashMap());
+        }
+        Log.d("Snapyr", "identify" + userId);
+        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        Log.d("Snapyr", inst.toString());
+        inst.identify(userId, traits, null);
+        promise.resolve(null);
+      } catch (Exception e) {
+        Log.d("Snapyr", "Error on identify");
+        promise.reject("Error on identify", e);
       }
-      Log.d("Snapyr", "identify" + userId);
-      Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
-      Log.d("Snapyr", inst.toString());
-      inst.identify(userId, traits, null);
-      inst.flush();
-      //Toast.makeText(this.getReactApplicationContext(),"Identified " + userId, Toast.LENGTH_LONG);
-      promise.resolve(null);
     }
 
 
     @ReactMethod
     public void track(String eventName, ReadableMap props, Promise promise) {
-      Properties properties = new Properties();
-      if (!Objects.isNull(props)) {
-        properties.putAll(props.toHashMap());
+      try {
+        if (!Snapyr.Valid()) {
+          Log.d("Snapyr", "Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          promise.reject("Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          return;
+        }
+
+        Properties properties = new Properties();
+        if (!Objects.isNull(props)) {
+          properties.putAll(props.toHashMap());
+        }
+        Log.d("Snapyr", "snapyr track " + eventName);
+        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        inst.track(eventName, properties, null);
+        promise.resolve(null);
+      } catch (Exception e) {
+        Log.d("Snapyr", "Error on track");
+        promise.reject("Error on track", e);
       }
-      Log.d("Snapyr", "snapyr track " + eventName);
-      Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
-      inst.track(eventName, properties, null);
-      inst.flush();
-      promise.resolve(null);
     }
 
-    public static native int nativeMultiply(int a, int b);
+    @ReactMethod
+    public void reset(Promise promise) {
+      try {
+        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        Snapyr.clearSingleton();
+        inst.shutdown();
+        promise.resolve(null);
+      } catch (Exception e) {
+        Log.d("Snapyr", "Error on reset");
+        promise.reject("Error on reset", e);
+      }
+    }
 }
