@@ -40,6 +40,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
     public void configure(String withKey, ReadableMap options, Promise promise) {
       try {
         Snapyr snapyr = new Snapyr.Builder(this.getReactApplicationContext().getApplicationContext(), withKey)
+        .flushQueueSize(1) // makes every event flush to network immediately
         .trackApplicationLifecycleEvents() // Enable this to record certain application events automatically
         .recordScreenViews() // Enable this to record screen views automatically
         .enableSnapyrPushHandling() // enable push for Android
@@ -75,7 +76,6 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
         Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
         Log.d("Snapyr", inst.toString());
         inst.identify(userId, traits, null);
-        inst.flush();
         promise.resolve(null);
       } catch (Exception e) {
         Log.d("Snapyr", "Error on identify");
@@ -100,7 +100,6 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
         Log.d("Snapyr", "snapyr track " + eventName);
         Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
         inst.track(eventName, properties, null);
-        inst.flush();
         promise.resolve(null);
       } catch (Exception e) {
         Log.d("Snapyr", "Error on track");
