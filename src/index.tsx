@@ -32,3 +32,11 @@ export function track(eventName: string, properties?: any): Promise<string> {
 export function setPushNotificationToken(token: string) {
   return SnapyrRnSdk.setPushNotificationToken(token);
 }
+
+export function pushNotificationReceived(snapyrData: any): Promise<void> {
+  return SnapyrRnSdk.pushNotificationReceived(snapyrData);
+}
+
+export function pushNotificationTapped(snapyrData: any, actionId?: string): Promise<void> {
+  return SnapyrRnSdk.pushNotificationTapped(snapyrData, actionId);
+}

@@ -20,6 +20,14 @@ import { configure, identify, track } from '@snapyr/react-native-sdk';
 await configure('writeKey');
 await identify('userId@here.com', { traits: 'optional' });
 await track('someEvent', { some: 'properties', for: 'example' });
+
+// after receiving a push notification payload, track received metric to Snapyr
+const snapyrData = notification.data?.snapyr;
+await pushNotificationReceived(snapyrData);
+
+// after receiving a push interaction callback, track tapped metric to Snapyr
+const snapyrData = notification.data?.snapyr;
+await pushNotificationTapped(snapyrData);
 ```
 
 ## Development
