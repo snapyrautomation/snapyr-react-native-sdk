@@ -37,7 +37,10 @@ export function pushNotificationReceived(snapyrData: any): Promise<void> {
   return SnapyrRnSdk.pushNotificationReceived(snapyrData);
 }
 
-export function pushNotificationTapped(snapyrData: any, actionId?: string): Promise<void> {
+export function pushNotificationTapped(
+  snapyrData: any,
+  actionId?: string
+): Promise<void> {
   return SnapyrRnSdk.pushNotificationTapped(snapyrData, actionId);
 }
 
