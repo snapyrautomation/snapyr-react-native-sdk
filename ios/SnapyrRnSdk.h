@@ -1,5 +1,7 @@
 #import <React/RCTBridgeModule.h>
 
-@interface SnapyrRnSdk : NSObject <RCTBridgeModule>
+
++ (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
++ (void)didReceiveRemoteNotification:(NSDictionary *)notification;
 
 @end
