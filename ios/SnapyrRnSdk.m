@@ -66,4 +66,10 @@ RCT_EXPORT_METHOD(pushNotificationTapped:(NSDictionary*)_snapyrData actionId:(NS
     [[SnapyrSDK sharedSDK] pushNotificationTapped:[_snapyrData copy]];
 }
 
+RCT_EXPORT_METHOD(reset)
+{
+    NSLog(@"reset");
+    // Do nothing, for now... stub method to maintain compat w/ Android
+}
+
 @end
