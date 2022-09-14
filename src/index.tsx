@@ -84,11 +84,9 @@ export function onSnapyrInAppMessage(callback: (message: SnapyrInAppMessage) => 
 }
 
 export function onSnapyrDidReceiveNotificationResponse(callback: ({actionIdentifier, userInfo}: {actionIdentifier: string, userInfo: Record<string, any>}) => void): void {
-  console.log("JSSDK: onSnapyrDidReceiveResponse registration");
   const listener = SnapyrEmitter.addListener(
     SNAPYR_LISTENER_NOTIFICATION_RESPONSE,
     (responseData) => {
-      console.log("JSSDK: RESPONSE", responseData);
       callback(responseData);
     },
   );
@@ -98,19 +96,7 @@ export function onSnapyrDidReceiveNotificationResponse(callback: ({actionIdentif
 }
 
 export function configure(key: string, options?: Partial<SnapyrConfigOptions>): Promise<string> {
-  // SnapyrRnSdk.addListener('snapyrTestListener');
-  // console.log("XXX JSSDK: config after addListener:", SnapyrEmitter);
-  // SnapyrEmitter = new NativeEventEmitter(SnapyrRnSdk);
-  
-  // console.log("XXX JSSDK: config after NativeEventEmitter:", SnapyrEmitter);
-  const ret = SnapyrRnSdk.configure(key, options);
-  // SnapyrEmitter.addListener('snapyrTestListener', (x) => {
-  //   // console.log("XXX JSSDK TEST LISTENER!!!!!!!!!!!", x);
-  // });
-  SnapyrEmitter.addListener('snapyrTest', (x) => {
-    console.log("XXX TEST THING::::::", x);
-  });
-  return ret;
+  return SnapyrRnSdk.configure(key, options);
 }
 
 export function identify(id: string, traits?: any): Promise<string> {
