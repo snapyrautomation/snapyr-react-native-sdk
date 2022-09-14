@@ -1,9 +1,15 @@
 #import "SnapyrRnSdk.h"
 #import <Snapyr/Snapyr.h>
 
-@implementation SnapyrRnSdk
+@implementation SnapyrRnSdk {
+    int _classId;
+    int _testMessageId;
+    NSTimer *_testTimer;
+}
 
 RCT_EXPORT_MODULE()
+
+static int classId = 0;
 
 // See // https://reactnative.dev/docs/native-modules-ios
 
@@ -28,6 +34,8 @@ RCT_REMAP_METHOD(configure,
     configuration.flushAt = 1;
     
     [SnapyrSDK setupWithConfiguration:configuration];
+    
+    [self addListener:@"snapyrDidRegister"];
     
     resolve(key);
 }
@@ -82,6 +90,9 @@ RCT_EXPORT_METHOD(reset)
   return @[
       @"snapyrDidRegister",
       @"snapyrDidReceiveNotification",
+      @"snapyrDidReceiveNotificationResponse",
+      @"snapyrTestListener",
+      @"snapyrTestThing",
   ];
 }
 
@@ -108,6 +119,54 @@ RCT_EXPORT_METHOD(reset)
      selector:@selector(handleSnapyrDidReceiveNotification:)
      name:@"snapyrDidReceiveNotification"
      object:nil];
+    
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(handleSnapyrDidReceiveNotificationResponse:)
+     name:@"snapyrDidReceiveNotificationResponse"
+     object:nil];
+    
+    // One-off: check if app was launched (from killed state?) by tapping a notification
+    // if so, trigger the regular "response" event?
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(handleTestThing:)
+     name:@"snapyrTestThing"
+     object:nil];
+    
+    NSMutableDictionary<NSString *, id> *initialNotification =
+        [self.bridge.launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey] mutableCopy];
+    
+    if (initialNotification != nil) {
+        NSLog(@"XXX: TEST THING TRIGGERING!!!");
+        [[NSNotificationCenter defaultCenter]
+         postNotificationName:@"snapyrTestThing"
+         object:self
+         userInfo:@{@"notification" : initialNotification}];
+    }
+    
+    
+    // DEBUG / TEST ONLY
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"XXX: dispatch timer thing");
+        self->_testTimer = [NSTimer scheduledTimerWithTimeInterval:5.0 repeats:YES block:^(NSTimer *timer) {
+            NSLog(@"XXX: Interval going");
+            self->_testMessageId++;
+            NSString *msgBody = [NSString stringWithFormat:(@"TEST! classId: %ld, messageId: %ld"), (long)self->_classId, (long)self->_testMessageId];
+            [self sendEventWithName:@"snapyrTestListener" body:msgBody];
+        }];
+    });
+//    [NSTimer scheduledTimerWithTimeInterval:10.0
+//                                    repeats:YES
+//                                      block:(void (^)(NSTimer *timer))
+//         {
+//
+//            NSLog(@"XXX: Interval going");
+//            _testMessageId++;
+//            NSString *msgBody = [NSString stringWithFormat:(@"TEST! classId: %ld, messageId: %ld"), (long)_classId, (long)_testMessageId];
+//            [self sendEventWithName:@"snapyrTestListener" body:msgBody];
+//        }
+//    ]
 }
 
 // Will be called when this module's last listener is removed, or on dealloc.
@@ -115,6 +174,7 @@ RCT_EXPORT_METHOD(reset)
     NSLog(@"XXX: stopObserving");
     // Remove upstream listeners, stop unnecessary background tasks
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [_testTimer invalidate];
 }
 
 
@@ -132,13 +192,19 @@ RCT_EXPORT_METHOD(reset)
     [self sendEventWithName:@"snapyrDidReceiveNotification" body:notif];
 }
 
-+ (void)didReceiveRemoteNotification:(NSDictionary *)notification
+- (void)handleSnapyrDidReceiveNotificationResponse:(NSNotification *)notification
 {
-    NSLog(@"XXX: didReceiveRemoteNotification: %@", notification);
-    [[NSNotificationCenter defaultCenter]
-     postNotificationName:@"snapyrDidReceiveNotification"
-     object:self
-     userInfo:@{@"notification": notification}];
+    NSLog(@"XXX: handleSnapyrDidReceiveNotification: %@", notification.userInfo);
+//    NSDictionary *notif = notification.userInfo[@"notification"];
+    [self sendEventWithName:@"snapyrDidReceiveNotificationResponse" body:notification.userInfo];
+}
+
+
+- (void)handleTestThing:(NSNotification *)notification
+{
+    NSLog(@"XXX: handleSnapyrDidRegister: %@", notification.userInfo);
+    NSString *notif = notification.userInfo[@"notification"];
+    [self sendEventWithName:@"snapyrTestThing" body:notif];
 }
 
 // Class method the consumer can call when application(_:didRegisterForRemoteNotificationsWithDeviceToken:)
@@ -163,6 +229,51 @@ RCT_EXPORT_METHOD(reset)
      postNotificationName:@"snapyrDidRegister"
      object:self
      userInfo:@{@"token" : [hexString copy]}];
+}
+
++ (void)didReceiveRemoteNotification:(NSDictionary *)notification
+{
+    NSLog(@"XXX: didReceiveRemoteNotification: %@", notification);
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:@"snapyrDidReceiveNotification"
+     object:self
+     userInfo:@{@"notification": notification}];
+}
+
++ (void)didReceiveNotificationResponse:(UNNotificationResponse *)response
+API_AVAILABLE(ios(10.0))
+{
+    //  response.actionIdentifier = string
+    //  response.notification.request.content.userInfo
+    NSString *actionIdentifier = response.actionIdentifier;
+    NSDictionary *userInfo = [response.notification.request.content.userInfo copy];
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:@"snapyrDidReceiveNotificationResponse"
+     object:self
+     userInfo:@{@"actionIdentifier": actionIdentifier, @"userInfo": userInfo}];
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    NSMutableDictionary<NSString *, id> *initialNotification =
+        [self.bridge.launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey] mutableCopy];
+    _classId = [SnapyrRnSdk nextClassId];
+    _testMessageId = 0;
+    NSLog(@"XXX INIT::: initialNotification: %@", initialNotification);
+    return self;
+}
+
++ (BOOL)requiresMainQueueSetup
+{
+    NSLog(@"XXX: REQUIRESMAINQUEUESETUP CALLED");
+    return NO;
+}
+
++ (int)nextClassId
+{
+    classId++;
+    return classId;
 }
 
 @end
