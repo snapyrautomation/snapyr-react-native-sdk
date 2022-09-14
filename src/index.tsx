@@ -1,4 +1,7 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
+
+const SNAPYR_LISTENER_REGISTER = 'snapyrDidRegister';
+const SNAPYR_LISTENER_NOTIFICATION = 'snapyrDidReceiveNotification';
 
 const LINKING_ERROR =
   `The package 'snapyr-react-native-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -16,6 +19,31 @@ const SnapyrRnSdk = NativeModules.SnapyrRnSdk
         },
       }
     );
+
+export const SnapyrEmitter = new NativeEventEmitter(SnapyrRnSdk);
+// Client code can register listeners (callbacks) on SDK events; use a map to limit to 1 listener per event type
+const _eventListeners = new Map();
+
+export function onSnapyrDidRegister(callback: (token: string) => void): void {
+  console.log("JSSDK: onSnapyrDidRegister registration");
+  const listener = SnapyrEmitter.addListener(
+    SNAPYR_LISTENER_REGISTER,
+    (token) => callback(token),
+  );
+  _eventListeners.set(SNAPYR_LISTENER_REGISTER, listener);
+}
+
+export function onSnapyrDidReceiveNotification(callback: (notification: any) => void): void {
+  console.log("JSSDK: onSnapyrDidReceive registration");
+  const listener = SnapyrEmitter.addListener(
+    SNAPYR_LISTENER_NOTIFICATION,
+    (notification) => {
+      console.log("JSSDK: NOTIFICATION", notification);
+      callback(notification);
+    },
+  );
+  _eventListeners.set(SNAPYR_LISTENER_NOTIFICATION, listener);
+}
 
 export function configure(key: string, options?: any): Promise<string> {
   return SnapyrRnSdk.configure(key, options);
