@@ -1,17 +1,12 @@
 #import "SnapyrRnSdk.h"
-#import <Snapyr/Snapyr.h>
+#import <Snapyr/SnapyrSDK.h>
+#import <Snapyr/SnapyrInAppMessage.h>
 
-@implementation SnapyrRnSdk {
-    int _classId;
-    int _testMessageId;
-    NSTimer *_testTimer;
-}
+@implementation SnapyrRnSdk
 
 RCT_EXPORT_MODULE()
 
-static int classId = 0;
-
-// See // https://reactnative.dev/docs/native-modules-ios
+// See https://reactnative.dev/docs/native-modules-ios
 
 RCT_REMAP_METHOD(configure,
                  withKey:(nonnull NSString*)key
@@ -26,10 +21,14 @@ RCT_REMAP_METHOD(configure,
     if ([_options objectForKey:@"recordScreenViews"]) {
         configuration.recordScreenViews = YES; // Enable this to record screen views automatically
     }
-    if ([_options objectForKey:@"enableDevMode"]) {
-        configuration.enableDevEnvironment = YES; // Test against a Snapyr dev environment *internal only*
+    if ([_options objectForKey:@"snapyrEnvironment"]) {
+        NSNumber *e = [_options valueForKey:@"snapyrEnvironment"];
+        // NB this relies on integer-based enums with the same values between React and iOS
+        configuration.snapyrEnvironment = (SnapyrEnvironment)e.integerValue; // Test against a Snapyr dev environment *internal only*
     }
-    
+    configuration.actionHandler = ^(SnapyrInAppMessage *message){
+        [self handleSnapyrInAppMessage:message];
+    };
     // makes every event flush to network immediately
     configuration.flushAt = 1;
     
@@ -58,7 +57,6 @@ RCT_EXPORT_METHOD(track:(NSString*)_event traits:(NSDictionary*)_traits)
 
 RCT_EXPORT_METHOD(setPushNotificationToken:(NSString*)_token)
 {
-    NSLog(@"%@ tokenNSLOG", _token);
     [[SnapyrSDK sharedSDK] setPushNotificationToken: _token];
 }
 
@@ -76,7 +74,7 @@ RCT_EXPORT_METHOD(pushNotificationTapped:(NSDictionary*)_snapyrData actionId:(NS
 
 RCT_EXPORT_METHOD(reset)
 {
-    NSLog(@"reset");
+    NSLog(@"SnapyrRnSdk: reset: not implemented");
     // Do nothing, for now... stub method to maintain compat w/ Android
 }
 
@@ -92,7 +90,8 @@ RCT_EXPORT_METHOD(reset)
       @"snapyrDidReceiveNotification",
       @"snapyrDidReceiveNotificationResponse",
       @"snapyrTestListener",
-      @"snapyrTestThing",
+      @"snapyrTest",
+      @"snapyrInAppMessage",
   ];
 }
 
@@ -101,12 +100,11 @@ RCT_EXPORT_METHOD(reset)
 // NB (PS): React Native auto initializes an instance of this class at startup and `startObserving` is
 // called to register any listeners we need.
 //
-// We provide class methods (kinda like static methods) for end user code to call so they don't need
+// We provide class methods (i.e. static methods) for end user code to call so they don't need
 // to manage lifecycle. Those class methods use NSNotificationCenter to pass the data along through
 // events; we listen to those events here in the actual instance, where we can then pass data back
 // into React Native.
 -(void)startObserving {
-    NSLog(@"XXX: startObserving");
     // Set up any upstream listeners or background tasks as necessary
     [[NSNotificationCenter defaultCenter]
      addObserver:self
@@ -125,86 +123,42 @@ RCT_EXPORT_METHOD(reset)
      selector:@selector(handleSnapyrDidReceiveNotificationResponse:)
      name:@"snapyrDidReceiveNotificationResponse"
      object:nil];
-    
-    // One-off: check if app was launched (from killed state?) by tapping a notification
-    // if so, trigger the regular "response" event?
-    [[NSNotificationCenter defaultCenter]
-     addObserver:self
-     selector:@selector(handleTestThing:)
-     name:@"snapyrTestThing"
-     object:nil];
-    
-    NSMutableDictionary<NSString *, id> *initialNotification =
-        [self.bridge.launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey] mutableCopy];
-    
-    if (initialNotification != nil) {
-        NSLog(@"XXX: TEST THING TRIGGERING!!!");
-        [[NSNotificationCenter defaultCenter]
-         postNotificationName:@"snapyrTestThing"
-         object:self
-         userInfo:@{@"notification" : initialNotification}];
-    }
-    
-    
-    // DEBUG / TEST ONLY
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSLog(@"XXX: dispatch timer thing");
-        self->_testTimer = [NSTimer scheduledTimerWithTimeInterval:5.0 repeats:YES block:^(NSTimer *timer) {
-            NSLog(@"XXX: Interval going");
-            self->_testMessageId++;
-            NSString *msgBody = [NSString stringWithFormat:(@"TEST! classId: %ld, messageId: %ld"), (long)self->_classId, (long)self->_testMessageId];
-            [self sendEventWithName:@"snapyrTestListener" body:msgBody];
-        }];
-    });
-//    [NSTimer scheduledTimerWithTimeInterval:10.0
-//                                    repeats:YES
-//                                      block:(void (^)(NSTimer *timer))
-//         {
-//
-//            NSLog(@"XXX: Interval going");
-//            _testMessageId++;
-//            NSString *msgBody = [NSString stringWithFormat:(@"TEST! classId: %ld, messageId: %ld"), (long)_classId, (long)_testMessageId];
-//            [self sendEventWithName:@"snapyrTestListener" body:msgBody];
-//        }
-//    ]
 }
 
 // Will be called when this module's last listener is removed, or on dealloc.
 -(void)stopObserving {
-    NSLog(@"XXX: stopObserving");
     // Remove upstream listeners, stop unnecessary background tasks
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_testTimer invalidate];
 }
 
+- (void)handleSnapyrInAppMessage:(SnapyrInAppMessage *)message
+{
+    // Body of events to RN must be JSON serializable so call asDict
+    [self sendEventWithName:@"snapyrInAppMessage" body:[message asDict]];
+}
 
 - (void)handleSnapyrDidRegister:(NSNotification *)notification
 {
-    NSLog(@"XXX: handleSnapyrDidRegister: %@", notification.userInfo);
     NSString *token = notification.userInfo[@"token"];
     [self sendEventWithName:@"snapyrDidRegister" body:token];
 }
 
 - (void)handleSnapyrDidReceiveNotification:(NSNotification *)notification
 {
-    NSLog(@"XXX: handleSnapyrDidReceiveNotification: %@", notification.userInfo);
     NSDictionary *notif = notification.userInfo[@"notification"];
     [self sendEventWithName:@"snapyrDidReceiveNotification" body:notif];
 }
 
 - (void)handleSnapyrDidReceiveNotificationResponse:(NSNotification *)notification
 {
-    NSLog(@"XXX: handleSnapyrDidReceiveNotification: %@", notification.userInfo);
-//    NSDictionary *notif = notification.userInfo[@"notification"];
     [self sendEventWithName:@"snapyrDidReceiveNotificationResponse" body:notification.userInfo];
 }
 
 
-- (void)handleTestThing:(NSNotification *)notification
+- (void)handleTest:(NSNotification *)notification
 {
-    NSLog(@"XXX: handleSnapyrDidRegister: %@", notification.userInfo);
     NSString *notif = notification.userInfo[@"notification"];
-    [self sendEventWithName:@"snapyrTestThing" body:notif];
+    [self sendEventWithName:@"snapyrTest" body:notif];
 }
 
 // Class method the consumer can call when application(_:didRegisterForRemoteNotificationsWithDeviceToken:)
@@ -213,7 +167,6 @@ RCT_EXPORT_METHOD(reset)
 // `handleSnapyrDidRegister`
 + (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
-    NSLog(@"XXX: didRegisterForRemoteNotificationsWithDeviceToken: %@", deviceToken);
     NSUInteger dataLength = deviceToken.length;
     if (dataLength == 0) {
         return;
@@ -233,7 +186,6 @@ RCT_EXPORT_METHOD(reset)
 
 + (void)didReceiveRemoteNotification:(NSDictionary *)notification
 {
-    NSLog(@"XXX: didReceiveRemoteNotification: %@", notification);
     [[NSNotificationCenter defaultCenter]
      postNotificationName:@"snapyrDidReceiveNotification"
      object:self
@@ -243,8 +195,6 @@ RCT_EXPORT_METHOD(reset)
 + (void)didReceiveNotificationResponse:(UNNotificationResponse *)response
 API_AVAILABLE(ios(10.0))
 {
-    //  response.actionIdentifier = string
-    //  response.notification.request.content.userInfo
     NSString *actionIdentifier = response.actionIdentifier;
     NSDictionary *userInfo = [response.notification.request.content.userInfo copy];
     [[NSNotificationCenter defaultCenter]
@@ -253,27 +203,9 @@ API_AVAILABLE(ios(10.0))
      userInfo:@{@"actionIdentifier": actionIdentifier, @"userInfo": userInfo}];
 }
 
-- (instancetype)init
-{
-    self = [super init];
-    NSMutableDictionary<NSString *, id> *initialNotification =
-        [self.bridge.launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey] mutableCopy];
-    _classId = [SnapyrRnSdk nextClassId];
-    _testMessageId = 0;
-    NSLog(@"XXX INIT::: initialNotification: %@", initialNotification);
-    return self;
-}
-
 + (BOOL)requiresMainQueueSetup
 {
-    NSLog(@"XXX: REQUIRESMAINQUEUESETUP CALLED");
     return NO;
-}
-
-+ (int)nextClassId
-{
-    classId++;
-    return classId;
 }
 
 @end
