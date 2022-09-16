@@ -115,6 +115,73 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void setPushNotificationToken(String token, Promise promise) {
+      try {
+        if (!Snapyr.Valid()) {
+          Log.d("Snapyr", "Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          promise.reject("Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          return;
+        }
+
+        Log.d("Snapyr", "snapyr setPushNotificationToken: " + token);
+        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        inst.setPushNotificationToken(token);
+        promise.resolve(null);
+      } catch (Exception e) {
+        Log.d("Snapyr", "Error on setPushNotificationToken");
+        promise.reject("Error on setPushNotificationToken", e);
+      }
+    }
+
+    @ReactMethod
+    public void pushNotificationReceived(ReadableMap props, Promise promise) {
+      try {
+        if (!Snapyr.Valid()) {
+          Log.d("Snapyr", "Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          promise.reject("Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          return;
+        }
+
+        Properties properties = new Properties();
+        if (!Objects.isNull(props)) {
+          properties.putAll(props.toHashMap());
+        }
+
+        Log.d("Snapyr", "snapyr pushNotificationReceived");
+        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        inst.pushNotificationReceived(properties);
+        promise.resolve(null);
+      } catch (Exception e) {
+        Log.d("Snapyr", "Error on pushNotificationReceived");
+        promise.reject("Error on pushNotificationReceived", e);
+      }
+    }
+
+    @ReactMethod
+    public void pushNotificationTapped(ReadableMap props, @Nullable String actionId, Promise promise) {
+      try {
+        if (!Snapyr.Valid()) {
+          Log.d("Snapyr", "Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          promise.reject("Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          return;
+        }
+
+        Properties properties = new Properties();
+        if (!Objects.isNull(props)) {
+          properties.putAll(props.toHashMap());
+        }
+
+        Log.d("Snapyr", "snapyr pushNotificationTapped");
+        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        inst.pushNotificationClicked(properties);
+        promise.resolve(null);
+      } catch (Exception e) {
+        Log.d("Snapyr", "Error on pushNotificationTapped");
+        promise.reject("Error on pushNotificationTapped", e);
+      }
+    }
+
+    @ReactMethod
     public void reset(Promise promise) {
       try {
         Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
