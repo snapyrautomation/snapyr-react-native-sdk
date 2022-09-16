@@ -1,4 +1,9 @@
-import { NativeModules, Platform } from 'react-native';
+import { EmitterSubscription, NativeEventEmitter, NativeModules, Platform } from 'react-native';
+
+const SNAPYR_LISTENER_REGISTER = 'snapyrDidRegister';
+const SNAPYR_LISTENER_NOTIFICATION = 'snapyrDidReceiveNotification';
+const SNAPYR_LISTENER_NOTIFICATION_RESPONSE = 'snapyrDidReceiveNotificationResponse';
+const SNAPYR_LISTENER_INAPP_MESSAGE = 'snapyrInAppMessage';
 
 const LINKING_ERROR =
   `The package 'snapyr-react-native-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -17,7 +22,80 @@ const SnapyrRnSdk = NativeModules.SnapyrRnSdk
       }
     );
 
-export function configure(key: string, options?: any): Promise<string> {
+export enum SnapyrEnvironment {
+  SnapyrEnvironmentDefault,
+  SnapyrEnvironmentStage,
+  SnapyrEnvironmentDev,
+};
+
+export type SnapyrConfigOptions = {
+  trackApplicationLifecycleEvents: boolean,
+  recordScreenViews: boolean,
+  snapyrEnvironment: SnapyrEnvironment,
+};
+
+export type SnapyrInAppMessage = { 
+  timestamp: string,
+  actionType: 'custom' | 'overlay',
+  userId: string,
+  actionToken: string,
+  content: {
+    payloadType: 'json' | 'html',
+    payload: string, 
+  } 
+};
+
+export const SnapyrEmitter = new NativeEventEmitter(SnapyrRnSdk);
+// Client code can register listeners (callbacks) on SDK events; use a map to limit to 1 listener per event type
+const _eventListeners = new Map<string, EmitterSubscription>();
+
+export function onSnapyrDidRegister(callback: (token: string) => void): void {
+  const listener = SnapyrEmitter.addListener(
+    SNAPYR_LISTENER_REGISTER,
+    (token) => callback(token),
+  );
+  // Remove/unsubscribe previous listener, if any
+  _eventListeners.get(SNAPYR_LISTENER_REGISTER)?.remove();
+  _eventListeners.set(SNAPYR_LISTENER_REGISTER, listener);
+}
+
+export function onSnapyrDidReceiveNotification(callback: (notification: any) => void): void {
+  const listener = SnapyrEmitter.addListener(
+    SNAPYR_LISTENER_NOTIFICATION,
+    (notification) => {
+      callback(notification);
+    },
+  );
+  // Remove/unsubscribe previous listener, if any
+  _eventListeners.get(SNAPYR_LISTENER_NOTIFICATION)?.remove();
+  _eventListeners.set(SNAPYR_LISTENER_NOTIFICATION, listener);
+}
+
+export function onSnapyrInAppMessage(callback: (message: SnapyrInAppMessage) => void): void {
+  const listener = SnapyrEmitter.addListener(
+    SNAPYR_LISTENER_INAPP_MESSAGE,
+    (message: SnapyrInAppMessage) => {
+      callback(message);
+    },
+  );
+  // Remove/unsubscribe previous listener, if any
+  _eventListeners.get(SNAPYR_LISTENER_INAPP_MESSAGE)?.remove();
+  _eventListeners.set(SNAPYR_LISTENER_INAPP_MESSAGE, listener);
+}
+
+export function onSnapyrDidReceiveNotificationResponse(callback: ({actionIdentifier, userInfo}: {actionIdentifier: string, userInfo: Record<string, any>}) => void): void {
+  const listener = SnapyrEmitter.addListener(
+    SNAPYR_LISTENER_NOTIFICATION_RESPONSE,
+    (responseData) => {
+      callback(responseData);
+    },
+  );
+  // Remove/unsubscribe previous listener, if any
+  _eventListeners.get(SNAPYR_LISTENER_NOTIFICATION_RESPONSE)?.remove();
+  _eventListeners.set(SNAPYR_LISTENER_NOTIFICATION_RESPONSE, listener);
+}
+
+export function configure(key: string, options?: Partial<SnapyrConfigOptions>): Promise<string> {
   return SnapyrRnSdk.configure(key, options);
 }
 
