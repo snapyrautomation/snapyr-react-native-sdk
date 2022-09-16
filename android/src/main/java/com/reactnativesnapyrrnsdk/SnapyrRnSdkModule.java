@@ -18,6 +18,7 @@ import com.facebook.react.module.annotations.ReactModule;
 import com.snapyr.sdk.Snapyr;
 import com.snapyr.sdk.Traits;
 import com.snapyr.sdk.Properties;
+import com.snapyr.sdk.http.ConnectionFactory;
 
 @ReactModule(name = SnapyrRnSdkModule.NAME)
 public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
@@ -39,16 +40,22 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void configure(String withKey, ReadableMap options, Promise promise) {
       try {
-        Snapyr snapyr = new Snapyr.Builder(this.getReactApplicationContext().getApplicationContext(), withKey)
+        Snapyr.Builder builder = new Snapyr.Builder(this.getReactApplicationContext().getApplicationContext(), withKey)
         .flushQueueSize(1) // makes every event flush to network immediately
         .trackApplicationLifecycleEvents() // Enable this to record certain application events automatically
         .recordScreenViews() // Enable this to record screen views automatically
-        .enableSnapyrPushHandling() // enable push for Android
-        .build();
+        .enableSnapyrPushHandling(); // enable push for Android
 
-        // enable dev here
+        if (options.hasKey("snapyrEnvironment")) {
+          try {
+            ConnectionFactory.Environment env = ConnectionFactory.Environment.values()[options.getInt("snapyrEnvironment")];
+            builder.snapyrEnvironment(env);
+          } catch (Exception e) {
+            Log.e("Snapyr", "Invalid environment provided");
+          }
+        }
 
-        // Snapyr snapyr = builder.build();
+        Snapyr snapyr = builder.build();
 
         // Set the initialized instance as a globally accessible instance.
         Snapyr.setSingletonInstance(snapyr);
