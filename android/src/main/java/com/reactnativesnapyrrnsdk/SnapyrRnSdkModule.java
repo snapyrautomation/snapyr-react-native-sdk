@@ -131,20 +131,6 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
         Log.d("Snapyr", "snapyr track " + eventName);
         Snapyr inst = Snapyr.with(this.getCurrentActivity());
         inst.track(eventName, properties, null);
-        if (eventName.equalsIgnoreCase("e")) {
-          Properties p;
-//          Log.e("Snapyr", p.toString());
-          throw new RuntimeException("runtime exception triggered manually");
-        }
-         if (eventName.equalsIgnoreCase("ee")) {
-           throw new AssertionException("runtime exception triggered manually");
-         }
-         if (eventName.equalsIgnoreCase("eee")) {
-           throw new AssertionError("runtime exception triggered manually");
-         }
-        if (eventName.equalsIgnoreCase("eeee")) {
-          throw new InternalError("runtime exception triggered manually");
-        }
         promise.resolve(null);
       } catch (Exception e) {
         Log.d("Snapyr", "Error on track");
@@ -255,44 +241,43 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
         .emit("snapyrInAppMessage", map);
     }
 
-  /**
-   * React Native typically starts the main activity before intializing native modules like this one.
-   * As a result, Snapyr's activity lifecycle callbacks will be registered after some lifecycle events
-   * are already finished, and those callbacks won't be automatically triggered for the main activity.
-   * After we have the activity AND Snapyr is initialized, manually "replay" the activity lifecycle
-   * events up to "resume" to ensure Snapyr tracks them and knows about the activity.
-   * NB Snapyr will handle deduplication of these calls automatically
-   */
-  public void replayActivityCallbacks() {
-    Activity activity = this.getCurrentActivity();
-    if (!snapyrConfigured || activityCallbacksReplayed || activity == null) {
-      return;
+    /**
+     * React Native typically starts the main activity before intializing native modules like this one.
+     * As a result, Snapyr's activity lifecycle callbacks will be registered after some lifecycle events
+     * are already finished, and those callbacks won't be automatically triggered for the main activity.
+     * After we have the activity AND Snapyr is initialized, manually "replay" the activity lifecycle
+     * events up to "resume" to ensure Snapyr tracks them and knows about the activity.
+     * NB Snapyr will handle deduplication of these calls automatically
+     */
+    public void replayActivityCallbacks() {
+      Activity activity = this.getCurrentActivity();
+      if (!snapyrConfigured || activityCallbacksReplayed || activity == null) {
+        return;
+      }
+
+      Snapyr inst = Snapyr.with(activity);
+
+      inst.replayLifecycleOnActivityCreated(activity, null);
+      inst.replayLifecycleOnActivityStarted(activity);
+      inst.replayLifecycleOnActivityResumed(activity);
+      this.activityCallbacksReplayed = true;
     }
 
-    Snapyr inst = Snapyr.with(activity);
+    @Override
+    public void onHostResume() {
+      // Called when React Native moves the main activity to ready state. "Replay" should generally
+      // take place in {@link #configure()}, but try again here just in case resume occurs after
+      // initialization.
+      this.replayActivityCallbacks();
+    }
 
-    inst.replayLifecycleOnActivityCreated(activity, null);
-    inst.replayLifecycleOnActivityStarted(activity);
-    inst.replayLifecycleOnActivityResumed(activity);
-    this.activityCallbacksReplayed = true;
-  }
+    @Override
+    public void onHostPause() {
+      // stub for LifecycleEventListener interface
+    }
 
-  @Override
-  public void onHostResume() {
-    Log.e("Snapyr", "ON HOST RESUME!!!");
-    // Called when React Native moves the main activity to ready state. "Replay" should generally
-    // take place in {@link #configure()}, but try again here just in case resume occurs after
-    // initialization.
-    this.replayActivityCallbacks();
-  }
-
-  @Override
-  public void onHostPause() {
-    // stub for LifecycleEventListener interface
-  }
-
-  @Override
-  public void onHostDestroy() {
-    // stub for LifecycleEventListener interface
-  }
+    @Override
+    public void onHostDestroy() {
+      // stub for LifecycleEventListener interface
+    }
 }
