@@ -63,7 +63,8 @@ repositories {
 dependencies {
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules
-	  implementation 'androidx.lifecycle:lifecycle-process:2.2.0'
-	  implementation 'androidx.lifecycle:lifecycle-common-java8:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-process:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation fileTree(dir: "libs", include: ["*.aar"])
 }
