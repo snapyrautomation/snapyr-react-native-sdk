@@ -272,8 +272,8 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
     Snapyr inst = Snapyr.with(activity);
 
     inst.replayLifecycleOnActivityCreated(activity, null);
-    inst.replayOnActivityStarted(activity);
-    inst.replayOnActivityResumed(activity);
+    inst.replayLifecycleOnActivityStarted(activity);
+    inst.replayLifecycleOnActivityResumed(activity);
     this.activityCallbacksReplayed = true;
   }
 
