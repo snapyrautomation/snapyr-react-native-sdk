@@ -3,11 +3,13 @@ package com.reactnativesnapyrrnsdk;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import android.app.Activity;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.Objects;
 
+import com.facebook.react.bridge.AssertionException;
+import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -28,12 +30,14 @@ import com.snapyr.sdk.inapp.InAppConfig;
 import com.snapyr.sdk.inapp.InAppMessage;
 
 @ReactModule(name = SnapyrRnSdkModule.NAME)
-public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
+public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
     public static final String NAME = "SnapyrRnSdk";
-    static volatile Snapyr singleton = null;
+    private Boolean snapyrConfigured = false;
+    private Boolean activityCallbacksReplayed = false;
 
     public SnapyrRnSdkModule(ReactApplicationContext reactContext) {
         super(reactContext);
+        reactContext.addLifecycleEventListener(this);
     }
 
     @Override
@@ -47,7 +51,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void configure(String withKey, ReadableMap options, Promise promise) {
       try {
-        Snapyr.Builder builder = new Snapyr.Builder(this.getReactApplicationContext().getApplicationContext(), withKey)
+        Snapyr.Builder builder = new Snapyr.Builder(this.getCurrentActivity(), withKey)
         .flushQueueSize(1) // makes every event flush to network immediately
         .trackApplicationLifecycleEvents() // Enable this to record certain application events automatically
         .recordScreenViews() // Enable this to record screen views automatically
@@ -76,6 +80,8 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
 
         // Set the initialized instance as a globally accessible instance.
         Snapyr.setSingletonInstance(snapyr);
+        snapyrConfigured = true;
+        this.replayActivityCallbacks();
         promise.resolve(withKey);
       } catch(Exception e) {
         Log.d("Snapyr", "Config errored");
@@ -91,13 +97,13 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
           promise.reject("Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
           return;
         }
-        
+
         Traits traits = new Traits();
         if (!Objects.isNull(traitsMap)) {
           traits.putAll(traitsMap.toHashMap());
         }
         Log.d("Snapyr", "identify" + userId);
-        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        Snapyr inst = Snapyr.with(this.getCurrentActivity());
         Log.d("Snapyr", inst.toString());
         inst.identify(userId, traits, null);
         promise.resolve(null);
@@ -121,8 +127,9 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
         if (!Objects.isNull(props)) {
           properties.putAll(props.toHashMap());
         }
+
         Log.d("Snapyr", "snapyr track " + eventName);
-        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        Snapyr inst = Snapyr.with(this.getCurrentActivity());
         inst.track(eventName, properties, null);
         promise.resolve(null);
       } catch (Exception e) {
@@ -141,7 +148,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
         }
 
         Log.d("Snapyr", "snapyr setPushNotificationToken: " + token);
-        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        Snapyr inst = Snapyr.with(this.getCurrentActivity());
         inst.setPushNotificationToken(token);
         promise.resolve(null);
       } catch (Exception e) {
@@ -165,7 +172,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
         }
 
         Log.d("Snapyr", "snapyr pushNotificationReceived");
-        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        Snapyr inst = Snapyr.with(this.getCurrentActivity());
         inst.pushNotificationReceived(properties);
         promise.resolve(null);
       } catch (Exception e) {
@@ -189,7 +196,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
         }
 
         Log.d("Snapyr", "snapyr pushNotificationTapped");
-        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        Snapyr inst = Snapyr.with(this.getCurrentActivity());
         inst.pushNotificationClicked(properties);
         promise.resolve(null);
       } catch (Exception e) {
@@ -201,7 +208,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void reset(Promise promise) {
       try {
-        Snapyr inst = Snapyr.with(this.getReactApplicationContext().getApplicationContext());
+        Snapyr inst = Snapyr.with(this.getCurrentActivity());
         Snapyr.clearSingleton();
         inst.shutdown();
         promise.resolve(null);
@@ -234,4 +241,43 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule {
         .emit("snapyrInAppMessage", map);
     }
 
+    /**
+     * React Native typically starts the main activity before intializing native modules like this one.
+     * As a result, Snapyr's activity lifecycle callbacks will be registered after some lifecycle events
+     * are already finished, and those callbacks won't be automatically triggered for the main activity.
+     * After we have the activity AND Snapyr is initialized, manually "replay" the activity lifecycle
+     * events up to "resume" to ensure Snapyr tracks them and knows about the activity.
+     * NB Snapyr will handle deduplication of these calls automatically
+     */
+    public void replayActivityCallbacks() {
+      Activity activity = this.getCurrentActivity();
+      if (!snapyrConfigured || activityCallbacksReplayed || activity == null) {
+        return;
+      }
+
+      Snapyr inst = Snapyr.with(activity);
+
+      inst.replayLifecycleOnActivityCreated(activity, null);
+      inst.replayLifecycleOnActivityStarted(activity);
+      inst.replayLifecycleOnActivityResumed(activity);
+      this.activityCallbacksReplayed = true;
+    }
+
+    @Override
+    public void onHostResume() {
+      // Called when React Native moves the main activity to ready state. "Replay" should generally
+      // take place in {@link #configure()}, but try again here just in case resume occurs after
+      // initialization.
+      this.replayActivityCallbacks();
+    }
+
+    @Override
+    public void onHostPause() {
+      // stub for LifecycleEventListener interface
+    }
+
+    @Override
+    public void onHostDestroy() {
+      // stub for LifecycleEventListener interface
+    }
 }
