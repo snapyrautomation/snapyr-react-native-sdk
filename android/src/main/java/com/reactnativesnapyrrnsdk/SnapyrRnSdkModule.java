@@ -2,24 +2,12 @@ package com.reactnativesnapyrrnsdk;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.ProcessLifecycleOwner;
 
 import android.app.Activity;
-import android.app.Application;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.Objects;
 
-// import javax.management.RuntimeErrorException;
-
-import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.AssertionException;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
@@ -42,30 +30,13 @@ import com.snapyr.sdk.inapp.InAppConfig;
 import com.snapyr.sdk.inapp.InAppMessage;
 
 @ReactModule(name = SnapyrRnSdkModule.NAME)
-public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements ActivityEventListener, LifecycleEventListener {
+public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
     public static final String NAME = "SnapyrRnSdk";
     private Boolean snapyrConfigured = false;
     private Boolean activityCallbacksReplayed = false;
 
     public SnapyrRnSdkModule(ReactApplicationContext reactContext) {
         super(reactContext);
-        Activity activity = this.getCurrentActivity();
-        Log.e("Snapyr", "RN CONSTRUCTOR: " + activity);
-
-      SnapyrRnLifecycleObserver obs = new SnapyrRnLifecycleObserver();
-
-      ((Application)reactContext.getApplicationContext()).registerActivityLifecycleCallbacks(obs);
-
-      Handler handler = new Handler(Looper.getMainLooper());
-      handler.post(new Runnable() {
-                     @Override
-                     public void run() {
-                       ProcessLifecycleOwner.get().getLifecycle().addObserver(obs);
-                     }
-                   });
-
-
-        reactContext.addActivityEventListener(this);
         reactContext.addLifecycleEventListener(this);
     }
 
@@ -80,9 +51,6 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Act
     @ReactMethod
     public void configure(String withKey, ReadableMap options, Promise promise) {
       try {
-        // test junk
-        Log.e("Snapyr", "CONFIGURE UPDATED 777");
-
         Snapyr.Builder builder = new Snapyr.Builder(this.getCurrentActivity(), withKey)
         .flushQueueSize(1) // makes every event flush to network immediately
         .trackApplicationLifecycleEvents() // Enable this to record certain application events automatically
@@ -287,16 +255,6 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Act
         .emit("snapyrInAppMessage", map);
     }
 
-  @Override
-  public void onActivityResult(Activity activity, int requestCode, int resultCode, @Nullable Intent data) {
-      Log.e("Snapyr", "NEW ACTIVITY RESULT!!!");
-  }
-
-  @Override
-  public void onNewIntent(Intent intent) {
-    Log.e("Snapyr", "NEW INTENT!!!");
-  }
-
   /**
    * React Native typically starts the main activity before intializing native modules like this one.
    * As a result, Snapyr's activity lifecycle callbacks will be registered after some lifecycle events
@@ -330,11 +288,11 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Act
 
   @Override
   public void onHostPause() {
-    Log.e("Snapyr", "ON HOST PAUSE!!!");
+    // stub for LifecycleEventListener interface
   }
 
   @Override
   public void onHostDestroy() {
-    Log.e("Snapyr", "ON HOST DESTROY!!!");
+    // stub for LifecycleEventListener interface
   }
 }
