@@ -1,8 +1,14 @@
-import { EmitterSubscription, NativeEventEmitter, NativeModules, Platform } from 'react-native';
+import {
+  EmitterSubscription,
+  NativeEventEmitter,
+  NativeModules,
+  Platform,
+} from 'react-native';
 
 const SNAPYR_LISTENER_REGISTER = 'snapyrDidRegister';
 const SNAPYR_LISTENER_NOTIFICATION = 'snapyrDidReceiveNotification';
-const SNAPYR_LISTENER_NOTIFICATION_RESPONSE = 'snapyrDidReceiveNotificationResponse';
+const SNAPYR_LISTENER_NOTIFICATION_RESPONSE =
+  'snapyrDidReceiveNotificationResponse';
 const SNAPYR_LISTENER_INAPP_MESSAGE = 'snapyrInAppMessage';
 
 const LINKING_ERROR =
@@ -26,23 +32,23 @@ export enum SnapyrEnvironment {
   SnapyrEnvironmentDefault,
   SnapyrEnvironmentStage,
   SnapyrEnvironmentDev,
-};
+}
 
 export type SnapyrConfigOptions = {
-  trackApplicationLifecycleEvents: boolean,
-  recordScreenViews: boolean,
-  snapyrEnvironment: SnapyrEnvironment,
+  trackApplicationLifecycleEvents: boolean;
+  recordScreenViews: boolean;
+  snapyrEnvironment: SnapyrEnvironment;
 };
 
-export type SnapyrInAppMessage = { 
-  timestamp: string,
-  actionType: 'custom' | 'overlay',
-  userId: string,
-  actionToken: string,
+export type SnapyrInAppMessage = {
+  timestamp: string;
+  actionType: 'custom' | 'overlay';
+  userId: string;
+  actionToken: string;
   content: {
-    payloadType: 'json' | 'html',
-    payload: string, 
-  } 
+    payloadType: 'json' | 'html';
+    payload: string;
+  };
 };
 
 export const SnapyrEmitter = new NativeEventEmitter(SnapyrRnSdk);
@@ -52,50 +58,65 @@ const _eventListeners = new Map<string, EmitterSubscription>();
 export function onSnapyrDidRegister(callback: (token: string) => void): void {
   const listener = SnapyrEmitter.addListener(
     SNAPYR_LISTENER_REGISTER,
-    (token) => callback(token),
+    (token) => callback(token)
   );
   // Remove/unsubscribe previous listener, if any
   _eventListeners.get(SNAPYR_LISTENER_REGISTER)?.remove();
   _eventListeners.set(SNAPYR_LISTENER_REGISTER, listener);
 }
 
-export function onSnapyrDidReceiveNotification(callback: (notification: any) => void): void {
+export function onSnapyrDidReceiveNotification(
+  callback: (notification: any) => void
+): void {
   const listener = SnapyrEmitter.addListener(
     SNAPYR_LISTENER_NOTIFICATION,
     (notification) => {
       callback(notification);
-    },
+    }
   );
   // Remove/unsubscribe previous listener, if any
   _eventListeners.get(SNAPYR_LISTENER_NOTIFICATION)?.remove();
   _eventListeners.set(SNAPYR_LISTENER_NOTIFICATION, listener);
 }
 
-export function onSnapyrInAppMessage(callback: (message: SnapyrInAppMessage) => void): void {
+export function onSnapyrInAppMessage(
+  callback: (message: SnapyrInAppMessage) => void
+): void {
   const listener = SnapyrEmitter.addListener(
     SNAPYR_LISTENER_INAPP_MESSAGE,
     (message: SnapyrInAppMessage) => {
       callback(message);
-    },
+    }
   );
   // Remove/unsubscribe previous listener, if any
   _eventListeners.get(SNAPYR_LISTENER_INAPP_MESSAGE)?.remove();
   _eventListeners.set(SNAPYR_LISTENER_INAPP_MESSAGE, listener);
 }
 
-export function onSnapyrDidReceiveNotificationResponse(callback: ({actionIdentifier, userInfo}: {actionIdentifier: string, userInfo: Record<string, any>}) => void): void {
+export function onSnapyrDidReceiveNotificationResponse(
+  callback: ({
+    actionIdentifier,
+    userInfo,
+  }: {
+    actionIdentifier: string;
+    userInfo: Record<string, any>;
+  }) => void
+): void {
   const listener = SnapyrEmitter.addListener(
     SNAPYR_LISTENER_NOTIFICATION_RESPONSE,
     (responseData) => {
       callback(responseData);
-    },
+    }
   );
   // Remove/unsubscribe previous listener, if any
   _eventListeners.get(SNAPYR_LISTENER_NOTIFICATION_RESPONSE)?.remove();
   _eventListeners.set(SNAPYR_LISTENER_NOTIFICATION_RESPONSE, listener);
 }
 
-export function configure(key: string, options?: Partial<SnapyrConfigOptions>): Promise<string> {
+export function configure(
+  key: string,
+  options?: Partial<SnapyrConfigOptions>
+): Promise<string> {
   return SnapyrRnSdk.configure(key, options);
 }
 
