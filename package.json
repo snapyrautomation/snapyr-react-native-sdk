@@ -1,6 +1,6 @@
 {
   "name": "@snapyr/react-native-sdk",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Snapyr SDK for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
