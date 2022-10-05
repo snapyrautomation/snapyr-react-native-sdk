@@ -220,7 +220,7 @@ PODS:
   - React-jsinspector (0.69.3)
   - React-logger (0.69.3):
     - glog
-  - react-native-snapyr-rn-sdk (1.1.0):
+  - react-native-snapyr-rn-sdk (1.0.0):
     - React-Core
     - Snapyr
   - React-perflogger (0.69.3)
