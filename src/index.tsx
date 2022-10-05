@@ -9,7 +9,6 @@ const SNAPYR_LISTENER_REGISTER = 'snapyrDidRegister';
 const SNAPYR_LISTENER_NOTIFICATION = 'snapyrDidReceiveNotification';
 const SNAPYR_LISTENER_NOTIFICATION_RESPONSE =
   'snapyrDidReceiveNotificationResponse';
-const SNAPYR_LISTENER_INAPP_MESSAGE = 'snapyrInAppMessage';
 
 const LINKING_ERROR =
   `The package 'snapyr-react-native-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -77,20 +76,6 @@ export function onSnapyrDidReceiveNotification(
   // Remove/unsubscribe previous listener, if any
   _eventListeners.get(SNAPYR_LISTENER_NOTIFICATION)?.remove();
   _eventListeners.set(SNAPYR_LISTENER_NOTIFICATION, listener);
-}
-
-export function onSnapyrInAppMessage(
-  callback: (message: SnapyrInAppMessage) => void
-): void {
-  const listener = SnapyrEmitter.addListener(
-    SNAPYR_LISTENER_INAPP_MESSAGE,
-    (message: SnapyrInAppMessage) => {
-      callback(message);
-    }
-  );
-  // Remove/unsubscribe previous listener, if any
-  _eventListeners.get(SNAPYR_LISTENER_INAPP_MESSAGE)?.remove();
-  _eventListeners.set(SNAPYR_LISTENER_INAPP_MESSAGE, listener);
 }
 
 export function onSnapyrDidReceiveNotificationResponse(
