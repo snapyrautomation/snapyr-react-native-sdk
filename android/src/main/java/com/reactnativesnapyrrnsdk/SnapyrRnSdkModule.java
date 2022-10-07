@@ -67,7 +67,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
               }
             ));
 
-        if (options.hasKey("snapyrEnvironment")) {
+        if (options != null && options.hasKey("snapyrEnvironment")) {
           try {
             ConnectionFactory.Environment env = ConnectionFactory.Environment.values()[options.getInt("snapyrEnvironment")];
             builder.snapyrEnvironment(env);
