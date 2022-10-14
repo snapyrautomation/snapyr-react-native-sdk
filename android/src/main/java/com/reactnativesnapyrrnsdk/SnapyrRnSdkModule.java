@@ -206,6 +206,62 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void trackInAppMessageImpression(String actionToken, Promise promise) {
+      try {
+        if (!Snapyr.Valid()) {
+          promise.reject("Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          return;
+        }
+
+        Log.d("Snapyr", "snapyr trackInAppMessageImpression: " + actionToken);
+        Snapyr inst = Snapyr.with(this.getCurrentActivity());
+        inst.trackInAppMessageImpression(actionToken);
+        promise.resolve(null);
+      } catch (Exception e) {
+        promise.reject("Error on trackInAppMessageImpression", e);
+      }
+    }
+
+    @ReactMethod
+    public void trackInAppMessageClick(String actionToken, ReadableMap props, Promise promise) {
+      try {
+        if (!Snapyr.Valid()) {
+          promise.reject("Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          return;
+        }
+
+        Properties properties = new Properties();
+        if (!Objects.isNull(props)) {
+          properties.putAll(props.toHashMap());
+        }
+
+        Log.d("Snapyr", "snapyr trackInAppMessageClick: " + actionToken);
+        Snapyr inst = Snapyr.with(this.getCurrentActivity());
+        inst.trackInAppMessageClick(actionToken, properties);
+        promise.resolve(null);
+      } catch (Exception e) {
+        promise.reject("Error on trackInAppMessageClick", e);
+      }
+    }
+
+    @ReactMethod
+    public void trackInAppMessageDismiss(String actionToken, Promise promise) {
+      try {
+        if (!Snapyr.Valid()) {
+          promise.reject("Snapyr SDK has not yet been configured. Call `configure()` before using this method.");
+          return;
+        }
+
+        Log.d("Snapyr", "snapyr trackInAppMessageDismiss: " + actionToken);
+        Snapyr inst = Snapyr.with(this.getCurrentActivity());
+        inst.trackInAppMessageDismiss(actionToken);
+        promise.resolve(null);
+      } catch (Exception e) {
+        promise.reject("Error on trackInAppMessageDismiss", e);
+      }
+    }
+
+    @ReactMethod
     public void reset(Promise promise) {
       try {
         Snapyr inst = Snapyr.with(this.getCurrentActivity());
