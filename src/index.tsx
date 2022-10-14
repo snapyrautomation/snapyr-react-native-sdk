@@ -40,15 +40,12 @@ export type SnapyrConfigOptions = {
   snapyrEnvironment: SnapyrEnvironment;
 };
 
-export type SnapyrInAppMessage = {
+export declare type SnapyrInAppMessage = {
   timestamp: string;
   actionType: 'custom' | 'overlay';
   userId: string;
   actionToken: string;
-  content: {
-    payloadType: 'json' | 'html';
-    payload: string;
-  };
+  content: { payloadType: 'json'; payload: Record<string, any> } | { payloadType: 'html'; payload: string; };
 };
 
 export const SnapyrEmitter = new NativeEventEmitter(SnapyrRnSdk);
