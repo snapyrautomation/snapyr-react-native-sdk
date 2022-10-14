@@ -1,5 +1,6 @@
 #import "SnapyrRnSdk.h"
 #import <Snapyr/SnapyrSDK.h>
+#import <Snapyr/SnapyrInAppMessage.h>
 
 @implementation SnapyrRnSdk
 
@@ -25,6 +26,9 @@ RCT_REMAP_METHOD(configure,
         // NB this relies on integer-based enums with the same values between React and iOS
         configuration.snapyrEnvironment = (SnapyrEnvironment)e.integerValue; // Test against a Snapyr dev environment *internal only*
     }
+    configuration.actionHandler = ^(SnapyrInAppMessage *message){
+        [self handleSnapyrInAppMessage:message];
+    };
     // makes every event flush to network immediately
     configuration.flushAt = 1;
     
@@ -87,6 +91,7 @@ RCT_EXPORT_METHOD(reset)
       @"snapyrDidReceiveNotificationResponse",
       @"snapyrTestListener",
       @"snapyrTest",
+      @"snapyrInAppMessage",
   ];
 }
 
@@ -124,6 +129,12 @@ RCT_EXPORT_METHOD(reset)
 -(void)stopObserving {
     // Remove upstream listeners, stop unnecessary background tasks
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)handleSnapyrInAppMessage:(SnapyrInAppMessage *)message
+{
+    // Body of events to RN must be JSON serializable so call asDict
+    [self sendEventWithName:@"snapyrInAppMessage" body:[message asDict]];
 }
 
 - (void)handleSnapyrDidRegister:(NSNotification *)notification
