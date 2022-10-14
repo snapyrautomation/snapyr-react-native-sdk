@@ -72,6 +72,21 @@ RCT_EXPORT_METHOD(pushNotificationTapped:(NSDictionary*)_snapyrData actionId:(NS
     [[SnapyrSDK sharedSDK] pushNotificationTapped:[_snapyrData copy]];
 }
 
+RCT_EXPORT_METHOD(trackInAppMessageImpression:(NSString *)_actionToken)
+{
+    [[SnapyrSDK sharedSDK] trackInAppMessageImpressionWithActionToken:_actionToken];
+}
+                  
+RCT_EXPORT_METHOD(trackInAppMessageClick:(NSString *)_actionToken parameters:(NSDictionary *)_parameters)
+{
+    [[SnapyrSDK sharedSDK] trackInAppMessageClickWithActionToken:_actionToken withParameters:_parameters];
+}
+
+RCT_EXPORT_METHOD(trackInAppMessageDismiss:(NSString *)_actionToken)
+{
+    [[SnapyrSDK sharedSDK] trackInAppMessageDismissWithActionToken:_actionToken];
+}
+
 RCT_EXPORT_METHOD(reset)
 {
     NSLog(@"SnapyrRnSdk: reset: not implemented");

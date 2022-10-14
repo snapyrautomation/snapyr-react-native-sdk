@@ -143,6 +143,18 @@ export function pushNotificationTapped(
   return SnapyrRnSdk.pushNotificationTapped(snapyrData, actionId);
 }
 
+export function trackInAppMessageImpression(actionToken: string): Promise<void> {
+  return SnapyrRnSdk.trackInAppMessageImpression(actionToken);
+}
+
+export function trackInAppMessageClick(actionToken: string, parameters: Record<string, any> = {}): Promise<void> {
+  return SnapyrRnSdk.trackInAppMessageClick(actionToken, parameters);
+}
+
+export function trackInAppMessageDismiss(actionToken: string): Promise<void> {
+  return SnapyrRnSdk.trackInAppMessageDismiss(actionToken);
+}
+
 export function reset() {
   return SnapyrRnSdk.reset();
 }
