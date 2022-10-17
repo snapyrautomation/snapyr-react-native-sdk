@@ -40,12 +40,26 @@ export type SnapyrConfigOptions = {
   snapyrEnvironment: SnapyrEnvironment;
 };
 
+export enum SnapyrInAppActionType {
+  Custom = 'custom',
+  Overlay = 'overlay',
+}
+
+export enum SnapyrInAppPayloadType {
+  JSON = 'json',
+  HTML = 'html',
+}
+
+export declare type SnapyrInAppContent =
+  | { payloadType: SnapyrInAppPayloadType.JSON; payload: Record<string, any> }
+  | { payloadType: SnapyrInAppPayloadType.HTML; payload: string };
+
 export declare type SnapyrInAppMessage = {
   timestamp: string;
-  actionType: 'custom' | 'overlay';
+  actionType: SnapyrInAppActionType;
   userId: string;
   actionToken: string;
-  content: { payloadType: 'json'; payload: Record<string, any> } | { payloadType: 'html'; payload: string; };
+  content: SnapyrInAppContent;
 };
 
 export const SnapyrEmitter = new NativeEventEmitter(SnapyrRnSdk);
@@ -140,12 +154,17 @@ export function pushNotificationTapped(
   return SnapyrRnSdk.pushNotificationTapped(snapyrData, actionId);
 }
 
-export function trackInAppMessageImpression(actionToken: string): Promise<void> {
+export function trackInAppMessageImpression(
+  actionToken: string
+): Promise<void> {
   return SnapyrRnSdk.trackInAppMessageImpression(actionToken);
 }
 
-export function trackInAppMessageClick(actionToken: string, parameters: Record<string, any> = {}): Promise<void> {
-  return SnapyrRnSdk.trackInAppMessageClick(actionToken, parameters);
+export function trackInAppMessageClick(
+  actionToken: string,
+  properties: Record<string, any> = {}
+): Promise<void> {
+  return SnapyrRnSdk.trackInAppMessageClick(actionToken, properties);
 }
 
 export function trackInAppMessageDismiss(actionToken: string): Promise<void> {
