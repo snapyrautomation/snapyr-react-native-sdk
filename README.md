@@ -46,7 +46,7 @@ onSnapyrInAppMessage((inappMessage: SnapyrInAppMessage) => {
     const actionToken = inappMessage.actionToken;
     // example... stash this message in a useState so we can read its properties elsewhere
     setCurrentInAppMessage(inappMessage);
-    if (inappMessage.actionType == "custom" && inappMessage.content.payloadType == "html") {
+    if (inappMessage.content.payloadType == "html") {
         // example... use HTML template somewhere in your app
         setHtmlContent(inappMessage.content.payload);
     }
@@ -57,7 +57,7 @@ onSnapyrInAppMessage((inappMessage: SnapyrInAppMessage) => {
 trackInAppMessageImpression(currentInAppMessage.actionToken);
 // ... after we've determined the user interacted with our message...
 trackInAppMessageClick(currentInAppMessage.actionToken, {exampleExtraProperty: "someId"});
-// ... if the user dismissed our message without interacting with it...
+// ... or, if the user dismissed our message, and we haven't recorded any other interaction...
 trackInAppMessageDismiss(currentInAppMessage.actionToken);
 
 // --- End of In-App messaging section ---
