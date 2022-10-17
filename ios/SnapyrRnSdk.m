@@ -77,9 +77,9 @@ RCT_EXPORT_METHOD(trackInAppMessageImpression:(NSString *)_actionToken)
     [[SnapyrSDK sharedSDK] trackInAppMessageImpressionWithActionToken:_actionToken];
 }
                   
-RCT_EXPORT_METHOD(trackInAppMessageClick:(NSString *)_actionToken parameters:(NSDictionary *)_parameters)
+RCT_EXPORT_METHOD(trackInAppMessageClick:(NSString *)_actionToken properties:(NSDictionary *)_properties)
 {
-    [[SnapyrSDK sharedSDK] trackInAppMessageClickWithActionToken:_actionToken withParameters:_parameters];
+    [[SnapyrSDK sharedSDK] trackInAppMessageClickWithActionToken:_actionToken withProperties:_properties];
 }
 
 RCT_EXPORT_METHOD(trackInAppMessageDismiss:(NSString *)_actionToken)
