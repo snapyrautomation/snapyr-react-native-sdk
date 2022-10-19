@@ -13,7 +13,17 @@ npm install @snapyr/react-native-sdk
 ### Use the SDK in your project:
 
 ```js
-import { configure, identify, track } from '@snapyr/react-native-sdk';
+import { 
+    configure,
+    identify,
+    track,
+    pushNotificationReceived,
+    pushNotificationTapped,
+    onSnapyrInAppMessage,
+    trackInAppMessageImpression,
+    trackInAppMessageClick,
+    trackInAppMessageDismiss,
+} from '@snapyr/react-native-sdk';
 
 // ...
 
@@ -28,6 +38,29 @@ await pushNotificationReceived(snapyrData);
 // after receiving a push interaction callback, track tapped metric to Snapyr
 const snapyrData = notification.data?.snapyr;
 await pushNotificationTapped(snapyrData);
+
+// --- In-App messaging section (optional) ---
+
+// listen to in-app messages from Snapyr 
+onSnapyrInAppMessage((inappMessage: SnapyrInAppMessage) => {
+    const actionToken = inappMessage.actionToken;
+    // example... stash this message in a useState so we can read its properties elsewhere
+    setCurrentInAppMessage(inappMessage);
+    if (inappMessage.content.payloadType == "html") {
+        // example... use HTML template somewhere in your app
+        setHtmlContent(inappMessage.content.payload);
+    }
+});
+
+// track how users are interacting with your in-app message
+// ... after we've shown a message to the user...
+trackInAppMessageImpression(currentInAppMessage.actionToken);
+// ... after we've determined the user interacted with our message...
+trackInAppMessageClick(currentInAppMessage.actionToken, {exampleExtraProperty: "someId"});
+// ... or, if the user dismissed our message, and we haven't recorded any other interaction...
+trackInAppMessageDismiss(currentInAppMessage.actionToken);
+
+// --- End of In-App messaging section ---
 ```
 
 ## Development

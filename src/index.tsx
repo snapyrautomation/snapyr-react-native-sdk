@@ -9,6 +9,7 @@ const SNAPYR_LISTENER_REGISTER = 'snapyrDidRegister';
 const SNAPYR_LISTENER_NOTIFICATION = 'snapyrDidReceiveNotification';
 const SNAPYR_LISTENER_NOTIFICATION_RESPONSE =
   'snapyrDidReceiveNotificationResponse';
+const SNAPYR_LISTENER_INAPP_MESSAGE = 'snapyrInAppMessage';
 
 const LINKING_ERROR =
   `The package 'snapyr-react-native-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -39,15 +40,26 @@ export type SnapyrConfigOptions = {
   snapyrEnvironment: SnapyrEnvironment;
 };
 
-export type SnapyrInAppMessage = {
+export enum SnapyrInAppActionType {
+  Custom = 'custom',
+  Overlay = 'overlay',
+}
+
+export enum SnapyrInAppPayloadType {
+  JSON = 'json',
+  HTML = 'html',
+}
+
+export declare type SnapyrInAppContent =
+  | { payloadType: SnapyrInAppPayloadType.JSON; payload: Record<string, any> }
+  | { payloadType: SnapyrInAppPayloadType.HTML; payload: string };
+
+export declare type SnapyrInAppMessage = {
   timestamp: string;
-  actionType: 'custom' | 'overlay';
+  actionType: SnapyrInAppActionType;
   userId: string;
   actionToken: string;
-  content: {
-    payloadType: 'json' | 'html';
-    payload: string;
-  };
+  content: SnapyrInAppContent;
 };
 
 export const SnapyrEmitter = new NativeEventEmitter(SnapyrRnSdk);
@@ -76,6 +88,20 @@ export function onSnapyrDidReceiveNotification(
   // Remove/unsubscribe previous listener, if any
   _eventListeners.get(SNAPYR_LISTENER_NOTIFICATION)?.remove();
   _eventListeners.set(SNAPYR_LISTENER_NOTIFICATION, listener);
+}
+
+export function onSnapyrInAppMessage(
+  callback: (message: SnapyrInAppMessage) => void
+): void {
+  const listener = SnapyrEmitter.addListener(
+    SNAPYR_LISTENER_INAPP_MESSAGE,
+    (message: SnapyrInAppMessage) => {
+      callback(message);
+    }
+  );
+  // Remove/unsubscribe previous listener, if any
+  _eventListeners.get(SNAPYR_LISTENER_INAPP_MESSAGE)?.remove();
+  _eventListeners.set(SNAPYR_LISTENER_INAPP_MESSAGE, listener);
 }
 
 export function onSnapyrDidReceiveNotificationResponse(
@@ -126,6 +152,23 @@ export function pushNotificationTapped(
   actionId?: string
 ): Promise<void> {
   return SnapyrRnSdk.pushNotificationTapped(snapyrData, actionId);
+}
+
+export function trackInAppMessageImpression(
+  actionToken: string
+): Promise<void> {
+  return SnapyrRnSdk.trackInAppMessageImpression(actionToken);
+}
+
+export function trackInAppMessageClick(
+  actionToken: string,
+  properties: Record<string, any> = {}
+): Promise<void> {
+  return SnapyrRnSdk.trackInAppMessageClick(actionToken, properties);
+}
+
+export function trackInAppMessageDismiss(actionToken: string): Promise<void> {
+  return SnapyrRnSdk.trackInAppMessageDismiss(actionToken);
 }
 
 export function reset() {
