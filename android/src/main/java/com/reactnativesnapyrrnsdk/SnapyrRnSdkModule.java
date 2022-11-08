@@ -99,7 +99,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
         }
 
         Traits traits = new Traits();
-        if (!Objects.isNull(traitsMap)) {
+        if (traitsMap != null) {
           traits.putAll(traitsMap.toHashMap());
         }
         Log.d("Snapyr", "identify" + userId);
@@ -124,7 +124,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
         }
 
         Properties properties = new Properties();
-        if (!Objects.isNull(props)) {
+        if (props != null) {
           properties.putAll(props.toHashMap());
         }
 
@@ -167,7 +167,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
         }
 
         Properties properties = new Properties();
-        if (!Objects.isNull(props)) {
+        if (props != null) {
           properties.putAll(props.toHashMap());
         }
 
@@ -191,7 +191,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
         }
 
         Properties properties = new Properties();
-        if (!Objects.isNull(props)) {
+        if (props != null) {
           properties.putAll(props.toHashMap());
         }
 
@@ -231,7 +231,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
         }
 
         Properties properties = new Properties();
-        if (!Objects.isNull(props)) {
+        if (props != null) {
           properties.putAll(props.toHashMap());
         }
 
