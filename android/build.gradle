@@ -68,5 +68,12 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation platform('com.google.firebase:firebase-bom:27.1.0')
     implementation 'com.google.firebase:firebase-messaging'
-    implementation 'com.snapyr.sdk.android:snapyr:1.2.2-beta3'
+    if (!safeExtGet('SnapyrRnSdk_omitSnapyrAndroidSDK', false)) {
+        implementation 'com.snapyr.sdk.android:snapyr:1.2.2-beta3'
+    } else {
+        logger.warn("===========================================================")
+        logger.warn("Snapyr RN: OMITTING ANDROID SDK! Consuming project must include Snapyr")
+        logger.warn("===========================================================")
+    }
+    // implementation fileTree(dir: "libs", include: ["*.aar"])
 }
