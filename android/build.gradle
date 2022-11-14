@@ -68,5 +68,5 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation platform('com.google.firebase:firebase-bom:27.1.0')
     implementation 'com.google.firebase:firebase-messaging'
-    implementation 'com.snapyr.sdk.android:snapyr:1.2.2-beta3'
+    implementation 'com.snapyr.sdk.android:snapyr:1.2.2-beta4'
 }
