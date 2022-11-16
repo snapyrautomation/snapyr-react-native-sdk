@@ -10,6 +10,8 @@ const SNAPYR_LISTENER_NOTIFICATION = 'snapyrDidReceiveNotification';
 const SNAPYR_LISTENER_NOTIFICATION_RESPONSE =
   'snapyrDidReceiveNotificationResponse';
 const SNAPYR_LISTENER_INAPP_MESSAGE = 'snapyrInAppMessage';
+const SNAPYR_LISTENER_DEEPLINK = 'deepLinkUrlReceived';
+// const SNAPYR_LISTENER_NOTIFICATION = 'notificationReceived';
 
 const LINKING_ERROR =
   `The package 'snapyr-react-native-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -82,6 +84,7 @@ export function onSnapyrDidReceiveNotification(
   const listener = SnapyrEmitter.addListener(
     SNAPYR_LISTENER_NOTIFICATION,
     (notification) => {
+      console.error("RN::: RECEIVED NOTIFICATION!!!", notification);
       callback(notification);
     }
   );
@@ -102,6 +105,21 @@ export function onSnapyrInAppMessage(
   // Remove/unsubscribe previous listener, if any
   _eventListeners.get(SNAPYR_LISTENER_INAPP_MESSAGE)?.remove();
   _eventListeners.set(SNAPYR_LISTENER_INAPP_MESSAGE, listener);
+}
+
+export function onSnapyrDeeplinkReceived(
+  callback: (message: SnapyrInAppMessage) => void
+): void {
+  const listener = SnapyrEmitter.addListener(
+    SNAPYR_LISTENER_DEEPLINK,
+    (message: SnapyrInAppMessage) => {
+      console.error("RN::: RECEIVED DEEPLINK CALLBACK!!!", message);
+      callback(message);
+    }
+  );
+  // Remove/unsubscribe previous listener, if any
+  _eventListeners.get(SNAPYR_LISTENER_DEEPLINK)?.remove();
+  _eventListeners.set(SNAPYR_LISTENER_DEEPLINK, listener);
 }
 
 export function onSnapyrDidReceiveNotificationResponse(

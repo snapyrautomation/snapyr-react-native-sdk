@@ -73,6 +73,8 @@ dependencies {
     } else {
         logger.warn("===========================================================")
         logger.warn("Snapyr RN: OMITTING ANDROID SDK! Consuming project must include Snapyr")
+        logger.warn("Attempting to `implementation project(':snapyr-root:snapyr')`...")
+        implementation project(':snapyr-root:snapyr')
         logger.warn("===========================================================")
     }
     // implementation fileTree(dir: "libs", include: ["*.aar"])

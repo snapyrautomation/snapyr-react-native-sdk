@@ -1,4 +1,33 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.reactnativesnapyrrnsdk">
-
+    <application>
+        <receiver android:name=".SnapyrRnDeeplinkReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.snapyr.sdk.notifications.ACTION_DEEPLINK" />
+            </intent-filter>
+        </receiver>
+      <receiver android:name=".SnapyrRnNotificationReceiver" android:exported="true">
+        <intent-filter>
+          <action android:name="com.snapyr.sdk.notifications.ACTION_NOTIFICATION_RECEIVED" />
+        </intent-filter>
+      </receiver>
+<!--        <receiver android:name=".SnapyrTopBroadcastReceiver" android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="com.snapyr.sdk.notifications.ACTION_DEEPLINK" />-->
+<!--                <action android:name="com.snapyr.sdk.ACTION_DEEPLINK" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+<!--        <receiver android:name="com.snapyr.sdk.notifications.SnapyrNotifBroadcastReceiver" android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="com.snapyr.sdk.notifications.ACTION_DEEPLINK" />-->
+<!--                <action android:name="com.snapyr.sdk.ACTION_DEEPLINK" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+        <!-- <receiver android:name="com.snapyr.sdk.SnapyrTopBroadcastReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.snapyr.sdk.notifications.ACTION_DEEPLINK" />
+                <action android:name="com.snapyr.sdk.ACTION_DEEPLINK" />
+            </intent-filter>
+        </receiver> -->
+    </application>
 </manifest>

@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 import android.app.Activity;
 import android.util.Log;
 
+import java.util.Map;
 import java.util.Objects;
 
 import com.facebook.react.bridge.AssertionException;
@@ -35,14 +36,65 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
     private Boolean snapyrConfigured = false;
     private Boolean activityCallbacksReplayed = false;
 
-    public SnapyrRnSdkModule(ReactApplicationContext reactContext) {
+    public SnapyrRnSdkModule() {
+      super();
+      Log.e("Snapyr.RN", "CONSTRUCTOR WITHOUT CONTEXT!!!");
+    }
+
+
+  @Override
+  protected void finalize() throws Throwable {
+    Log.e("Snapyr.RN", "FINALIZE!");
+    super.finalize();
+  }
+
+  @Nullable
+  @Override
+  public Map<String, Object> getConstants() {
+    Log.d("Snapyr.RN", "getConstants()");
+    return super.getConstants();
+  }
+
+  @Override
+  public void initialize() {
+    Log.d("Snapyr.RN", "initialize()");
+    super.initialize();
+  }
+
+  @Override
+  public boolean canOverrideExistingModule() {
+    Log.d("Snapyr.RN", "canOverrideExistingModule()");
+    return super.canOverrideExistingModule();
+  }
+
+  @Override
+  public void onCatalystInstanceDestroy() {
+    Log.d("Snapyr.RN", "onCatalystInstanceDestroy()");
+    super.onCatalystInstanceDestroy();
+  }
+
+  @Override
+  public boolean hasConstants() {
+    Log.d("Snapyr.RN", "hasConstants()");
+    return super.hasConstants();
+  }
+
+  @Override
+  public void invalidate() {
+    Log.d("Snapyr.RN", "invalidate()");
+    super.invalidate();
+  }
+
+  public SnapyrRnSdkModule(ReactApplicationContext reactContext) {
         super(reactContext);
+        Log.d("Snapyr.RN", "CONSTRUCTOR...");
         reactContext.addLifecycleEventListener(this);
     }
 
     @Override
     @NonNull
     public String getName() {
+      Log.d("Snapyr.RN", "getName()");
         return NAME;
     }
 
@@ -82,6 +134,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
         Snapyr.setSingletonInstance(snapyr);
         snapyrConfigured = true;
         this.replayActivityCallbacks();
+        Log.e("Snapyr.RN", "Configure completed successfully.");
         promise.resolve(withKey);
       } catch(Exception e) {
         Log.d("Snapyr", "Config errored");
@@ -280,17 +333,20 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void addListener(String eventName) {
+      Log.d("Snapyr.RN", "addListener(): " + eventName);
       // Set up any upstream listeners or background tasks as necessary
       // Stub - nothing to do here so far but method signature is required
     }
 
     @ReactMethod
     public void removeListeners(Integer count) {
+      Log.d("Snapyr.RN", "removeListeners(): " + count);
       // Remove upstream listeners, stop unnecessary background tasks
       // Stub - nothing to do here so far but method signature is required
     }
 
     private void handleInAppMessage(InAppMessage message) {
+//      Arguments.
       WritableNativeMap map = Arguments.makeNativeMap(message.asValueMap());
       this.getReactApplicationContext()
         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
@@ -324,16 +380,19 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
       // Called when React Native moves the main activity to ready state. "Replay" should generally
       // take place in {@link #configure()}, but try again here just in case resume occurs after
       // initialization.
+      Log.d("Snapyr.RN", "onHostResume()");
       this.replayActivityCallbacks();
     }
 
     @Override
     public void onHostPause() {
+      Log.d("Snapyr.RN", "onHostPause()");
       // stub for LifecycleEventListener interface
     }
 
     @Override
     public void onHostDestroy() {
+      Log.d("Snapyr.RN", "onHostDestroy()");
       // stub for LifecycleEventListener interface
     }
 }
