@@ -1,6 +1,5 @@
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
-const SNAPYR_LISTENER_REGISTER = 'snapyrDidRegister';
 const SNAPYR_LISTENER_NOTIFICATION = 'snapyrDidReceiveNotification';
 const SNAPYR_LISTENER_NOTIFICATION_RESPONSE =
   'snapyrDidReceiveNotificationResponse';
@@ -128,10 +127,10 @@ function setupEventListener<T>(
 }
 
 // Not currently supported... @todo finish implementation or remove
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const onSnapyrDidRegister = setupEventListener<string>(
-  SNAPYR_LISTENER_REGISTER
-);
+// const SNAPYR_LISTENER_REGISTER = 'snapyrDidRegister';
+// const onSnapyrDidRegister = setupEventListener<string>(
+//   SNAPYR_LISTENER_REGISTER
+// );
 
 /**
  * Registers a callback that will be called when Snapyr receives an in-app message.
@@ -144,7 +143,7 @@ export const onSnapyrInAppMessage = setupEventListener<SnapyrInAppMessage>(
 
 /**
  * **Beta** - not yet fully supported for iOS
- * 
+ *
  * Registers a callback that will be called when Snapyr receives a notification response, i.e. a tap on a notification.
  *
  * Only one callback can be registered at a time. Calling this function for a second time will replace the first callback with the second one.
@@ -156,7 +155,7 @@ export const onSnapyrNotificationResponse =
 
 /**
  * **Beta** - not yet fully supported for iOS
- * 
+ *
  * Registers a callback that will be called when Snapyr receives a notification.
  *
  * Only one callback can be registered at a time. Calling this function for a second time will replace the first callback with the second one.

@@ -1,115 +1,44 @@
 package com.reactnativesnapyrrnsdk;
 
+import android.app.Activity;
+import android.content.Context;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.util.Log;
-
-import java.text.MessageFormat;
-import java.util.Map;
-
-import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.module.annotations.ReactModule;
-
-
-import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.snapyr.sdk.Properties;
 import com.snapyr.sdk.Snapyr;
 import com.snapyr.sdk.Traits;
-import com.snapyr.sdk.Properties;
-import com.snapyr.sdk.ValueMap;
 import com.snapyr.sdk.http.ConnectionFactory;
 import com.snapyr.sdk.inapp.InAppConfig;
-import com.snapyr.sdk.inapp.InAppMessage;
-import com.snapyr.sdk.notifications.SnapyrNotification;
 
 @ReactModule(name = SnapyrRnSdkModule.NAME)
-public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements LifecycleEventListener, ActivityEventListener {
+public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
     public static final String NAME = "SnapyrRnSdk";
     private Boolean snapyrConfigured = false;
     private Boolean activityCallbacksReplayed = false;
-  private WritableMap initialIntentMap = null;
+    private WritableMap initialIntentMap = null;
 
-  public SnapyrRnSdkModule() {
-      super();
-      Log.e("Snapyr.RN", "CONSTRUCTOR WITHOUT CONTEXT!!!");
+    private Context getCurrentContext() {
+      Context context = this.getCurrentActivity();
+      if (context == null) {
+        context = this.getReactApplicationContext();
+      }
+      return context;
     }
 
-
-  @Override
-  protected void finalize() throws Throwable {
-    Log.e("Snapyr.RN", "FINALIZE!");
-    super.finalize();
-  }
-
-  @Nullable
-  @Override
-  public Map<String, Object> getConstants() {
-    Log.d("Snapyr.RN", "getConstants()");
-    return super.getConstants();
-  }
-
-  @Override
-  public void initialize() {
-    Log.d("Snapyr.RN", "initialize()");
-    if (this.initialIntentMap != null) {
-      Log.d("Snapyr.RN", "Post-configure intent send...");
-      this.getReactApplicationContext()
-        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-        .emit("initialIntentTest", this.initialIntentMap);
-      this.initialIntentMap = null;
-    }
-    super.initialize();
-  }
-
-  @Override
-  public boolean canOverrideExistingModule() {
-    Log.d("Snapyr.RN", "canOverrideExistingModule()");
-    return super.canOverrideExistingModule();
-  }
-
-  @Override
-  public void onCatalystInstanceDestroy() {
-    Log.d("Snapyr.RN", "onCatalystInstanceDestroy()");
-    super.onCatalystInstanceDestroy();
-  }
-
-  @Override
-  public boolean hasConstants() {
-    Log.d("Snapyr.RN", "hasConstants()");
-    return super.hasConstants();
-  }
-
-  @Override
-  public void invalidate() {
-    Log.d("Snapyr.RN", "invalidate()");
-    super.invalidate();
-  }
-
-  private Context getCurrentContext() {
-    Context context = this.getCurrentActivity();
-    if (context == null) {
-      context = this.getReactApplicationContext();
-    }
-    return context;
-  }
-
-  public SnapyrRnSdkModule(ReactApplicationContext reactContext) {
+    public SnapyrRnSdkModule(ReactApplicationContext reactContext) {
         super(reactContext);
-        Log.d("Snapyr.RN", "CONSTRUCTOR...");
         reactContext.addLifecycleEventListener(this);
-        reactContext.addActivityEventListener(this);
         // Not using instance here but calling this ensures it has this current context
         SnapyrRnInAppHandler.getInstance(reactContext);
     }
@@ -117,7 +46,6 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
     @Override
     @NonNull
     public String getName() {
-      Log.d("Snapyr.RN", "getName()");
         return NAME;
     }
 
@@ -135,16 +63,7 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
           new InAppConfig()
             .setActionCallback(
               SnapyrRnInAppHandler.getInstance(this.getReactApplicationContext())
-//              new InAppCallback() {
-//                @Override
-//                public void onAction(InAppMessage inAppMessage) {
-//                  handleInAppMessage(inAppMessage);
-//                }
-//              }
             ));
-
-        // DEV ONLY REMOVE THIS
-        builder.logLevel(Snapyr.LogLevel.VERBOSE);
 
         if (options != null && options.hasKey("snapyrEnvironment")) {
           try {
@@ -161,13 +80,8 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
         Snapyr.setSingletonInstance(snapyr);
         snapyrConfigured = true;
         this.replayActivityCallbacks();
-        Log.e("Snapyr.RN", "Configure completed successfully.");
-
-
-
         promise.resolve(withKey);
-      } catch(Exception e) {
-        Log.d("Snapyr", "Config errored:", e);
+      } catch (Exception e) {
         promise.reject("Error initializing Snapyr", e);
       }
     }
@@ -363,24 +277,14 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void addListener(String eventName) {
-      Log.d("Snapyr.RN", "addListener(): " + eventName);
       // Set up any upstream listeners or background tasks as necessary
       // Stub - nothing to do here so far but method signature is required
     }
 
     @ReactMethod
     public void removeListeners(Integer count) {
-      Log.d("Snapyr.RN", "removeListeners(): " + count);
       // Remove upstream listeners, stop unnecessary background tasks
       // Stub - nothing to do here so far but method signature is required
-    }
-
-    private void handleInAppMessage(InAppMessage message) {
-//      Arguments.
-      WritableNativeMap map = Arguments.makeNativeMap(message.asValueMap());
-      this.getReactApplicationContext()
-        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-        .emit("snapyrInAppMessage", map);
     }
 
     /**
@@ -405,91 +309,21 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
       this.activityCallbacksReplayed = true;
     }
 
-    public void checkInitialActivityIntent() {
-      Activity activity = this.getCurrentActivity();
-      if (activity == null) {
-        Log.e("Snapyr.RN", "checkInitialActivityIntent: NO ACTIVITY???");
-        return;
-      }
-      Intent intent = activity.getIntent();
-      if (intent == null) {
-        Log.e("Snapyr.RN", "checkInitialActivityIntent: NO INTENT???");
-        return;
-      }
-      Log.d("Snapyr.RN", "checkInitialActivityIntent: proceeding...");
-
-      SnapyrNotification snapyrNotification;
-//      try {
-      snapyrNotification = intent.getParcelableExtra("snapyr.notification");
-      WritableNativeMap snapyrNotifMap = (snapyrNotification != null) ? Arguments.makeNativeMap(snapyrNotification.asValueMap()) : null;
-//    } catch (Exception e) {}
-      intent.removeExtra("snapyr.notification");
-      WritableMap intentExtrasMap = (intent.getExtras() != null) ? Arguments.fromBundle(intent.getExtras()) : null;
-
-      WritableMap map = Arguments.createMap();
-
-//      Bundle bundle = new Bundle();
-      map.putMap("snapyr.snapyrNotification", snapyrNotifMap);
-      map.putMap("snapyr.intent.extras", intentExtrasMap);
-      map.putString("snapyr.intent.data", intent.getDataString());
-      map.putString("snapyr.intent.action", intent.getAction());
-      map.putString("snapyr.intent.package", intent.getPackage());
-//      map.putString("snapyr.intent.componentToString", intent.getComponent().toString());
-//      map.putString("snapyr.intent.componentFlattenToString", intent.getComponent().flattenToString());
-      map.putString("snapyr.intent.componentGetClassName", intent.getComponent().getClassName());
-
-      this.initialIntentMap = map.copy();
-
-//      this.getReactApplicationContext()
-//        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-//        .emit("initialIntentTest", map);
-    }
-
     @Override
     public void onHostResume() {
       // Called when React Native moves the main activity to ready state. "Replay" should generally
       // take place in {@link #configure()}, but try again here just in case resume occurs after
       // initialization.
-      Log.d("Snapyr.RN", "onHostResume()");
       this.replayActivityCallbacks();
-      this.checkInitialActivityIntent();
     }
 
     @Override
     public void onHostPause() {
-      Log.d("Snapyr.RN", "onHostPause()");
       // stub for LifecycleEventListener interface
     }
 
     @Override
     public void onHostDestroy() {
-      Log.d("Snapyr.RN", "onHostDestroy()");
       // stub for LifecycleEventListener interface
-    }
-
-    @Override
-    public void onActivityResult(Activity activity, int i, int i1, @Nullable Intent intent) {
-      Log.d("Snapyr.RN", MessageFormat.format("onActivityResult:\n\tactivity: {0}\n\ti: {1}\n\ti1: {2}\n\tintent: {3}", activity, i, i1, intent));
-    }
-
-    @Override
-    public void onNewIntent(Intent intent) {
-      SnapyrNotification snapyrNotification = intent.getParcelableExtra("snapyr.notification");
-      ValueMap notifMap = (snapyrNotification != null) ? snapyrNotification.asValueMap() : null;
-      Log.d("Snapyr.RN", MessageFormat.format("onNewIntent:\n\tintent: {0}\n\tsnapyrNotif: {1}", intent, notifMap));
-      String launchStatus = intent.getStringExtra("snapyr.launchStatus");
-      if (launchStatus != null && launchStatus.startsWith("normal")) {
-        Log.i("Snapyr.RN", "onNewIntent: launch status normal: " + launchStatus);
-        if (snapyrNotification == null) {
-          Log.e("Snapyr.RN", "onNewIntent: NO SNAPYRNOTIFICATION");
-          return;
-        }
-        WritableNativeMap map = Arguments.makeNativeMap(snapyrNotification.asValueMap());
-        this.getReactApplicationContext()
-          .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-          .emit("onNewIntentTest", map);
-      } else {
-        Log.e("Snapyr.RN", "onNewIntent: NON-NORMAL LAUNCH STATUS: " + launchStatus);
-      }
     }
 }
