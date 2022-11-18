@@ -1,17 +1,10 @@
-import {
-  EmitterSubscription,
-  NativeEventEmitter,
-  NativeModules,
-  Platform,
-} from 'react-native';
+import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
 const SNAPYR_LISTENER_REGISTER = 'snapyrDidRegister';
 const SNAPYR_LISTENER_NOTIFICATION = 'snapyrDidReceiveNotification';
 const SNAPYR_LISTENER_NOTIFICATION_RESPONSE =
   'snapyrDidReceiveNotificationResponse';
 const SNAPYR_LISTENER_INAPP_MESSAGE = 'snapyrInAppMessage';
-const SNAPYR_LISTENER_DEEPLINK = 'deepLinkUrlReceived';
-// const SNAPYR_LISTENER_NOTIFICATION = 'notificationReceived';
 
 const LINKING_ERROR =
   `The package 'snapyr-react-native-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -42,6 +35,18 @@ export type SnapyrConfigOptions = {
   snapyrEnvironment: SnapyrEnvironment;
 };
 
+export type SnapyrEventCallbackOptions = {
+  /**
+   * If set to true, at the time that you register a callback, Snapyr will check for an event that arrived before registration. If one found, your callback will immediately be triggered once with the stored event, then continue listening.
+   *
+   * This can be useful for responding to events that occur early in the application lifecycle, such as a push notification response that launched the app.
+   *
+   * Snapyr only stores one event of each type. If multiple events have come in before you register a callback, only the latest event will fire.
+   * @default false
+   */
+  fireQueuedPayloads?: boolean;
+};
+
 export enum SnapyrInAppActionType {
   Custom = 'custom',
   Overlay = 'overlay',
@@ -64,83 +69,102 @@ export declare type SnapyrInAppMessage = {
   content: SnapyrInAppContent;
 };
 
+export declare type SnapyrPushNotificationPayload = {
+  notificationId: number;
+  titleText: string;
+  contentText: string;
+  subtitleText: string | null;
+  deepLinkUrl: string | null;
+  imageUrl: string | null;
+};
+
+// Same data for now but will likely change, e.g. to include action button ID or cancellation data, so establishing separate type
+export declare type SnapyrPushNotificationResponsePayload =
+  SnapyrPushNotificationPayload;
+
+type SnapyrEventCallback<T> = (eventPayload: T) => void;
+
 export const SnapyrEmitter = new NativeEventEmitter(SnapyrRnSdk);
 // Client code can register listeners (callbacks) on SDK events; use a map to limit to 1 listener per event type
-const _eventListeners = new Map<string, EmitterSubscription>();
+const _eventCallbacks = new Map<string, SnapyrEventCallback<any>>();
+// If we receive an event before client has registered a callback for it, store the payload so it can optionally be fired once a callback is registered. Only stores one payload (the last one to be received) for each event at this time.
+const _pendingEvents = new Map<string, any>();
 
-export function onSnapyrDidRegister(callback: (token: string) => void): void {
-  const listener = SnapyrEmitter.addListener(
-    SNAPYR_LISTENER_REGISTER,
-    (token) => callback(token)
-  );
-  // Remove/unsubscribe previous listener, if any
-  _eventListeners.get(SNAPYR_LISTENER_REGISTER)?.remove();
-  _eventListeners.set(SNAPYR_LISTENER_REGISTER, listener);
-}
-
-export function onSnapyrDidReceiveNotification(
-  callback: (notification: any) => void
-): void {
-  const listener = SnapyrEmitter.addListener(
-    SNAPYR_LISTENER_NOTIFICATION,
-    (notification) => {
-      console.error("RN::: RECEIVED NOTIFICATION!!!", notification);
-      callback(notification);
+/**
+ * Generate an event listener registration callback for the given (native) event name, and start listening for native events.
+ *
+ * This will catch and store any event fired from the native side even if no user callback has been registered yet, allowing for a "replay" of the latest event at callback registration time.
+ */
+function setupEventListener<T>(
+  eventName: string
+): (
+  callback: SnapyrEventCallback<T>,
+  options?: SnapyrEventCallbackOptions
+) => void {
+  // NB register the NativeEventEmitter listener immediately so we catch any events fired from native, even if client callbacks have not yet been registered
+  SnapyrEmitter.addListener(eventName, (event: T) => {
+    const existingCallback = _eventCallbacks.get(eventName);
+    if (existingCallback !== undefined) {
+      existingCallback(event);
+    } else {
+      // Received event from native before any client callbacks registered - store it for potential later use
+      _pendingEvents.set(eventName, event);
     }
-  );
-  // Remove/unsubscribe previous listener, if any
-  _eventListeners.get(SNAPYR_LISTENER_NOTIFICATION)?.remove();
-  _eventListeners.set(SNAPYR_LISTENER_NOTIFICATION, listener);
+  });
+
+  return (
+    callback: SnapyrEventCallback<T>,
+    options?: SnapyrEventCallbackOptions
+  ): void => {
+    _eventCallbacks.set(eventName, callback);
+    // If there's a stored event from before this registration, fire it now (if configured to do so), and clear it out
+    if (_pendingEvents.has(eventName)) {
+      if (options?.fireQueuedPayloads === true) {
+        callback(_pendingEvents.get(eventName));
+      }
+      _pendingEvents.delete(eventName);
+    }
+  };
 }
 
-export function onSnapyrInAppMessage(
-  callback: (message: SnapyrInAppMessage) => void
-): void {
-  const listener = SnapyrEmitter.addListener(
-    SNAPYR_LISTENER_INAPP_MESSAGE,
-    (message: SnapyrInAppMessage) => {
-      callback(message);
-    }
-  );
-  // Remove/unsubscribe previous listener, if any
-  _eventListeners.get(SNAPYR_LISTENER_INAPP_MESSAGE)?.remove();
-  _eventListeners.set(SNAPYR_LISTENER_INAPP_MESSAGE, listener);
-}
+// Not currently supported... @todo finish implementation or remove
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const onSnapyrDidRegister = setupEventListener<string>(
+  SNAPYR_LISTENER_REGISTER
+);
 
-export function onSnapyrDeeplinkReceived(
-  callback: (message: SnapyrInAppMessage) => void
-): void {
-  const listener = SnapyrEmitter.addListener(
-    SNAPYR_LISTENER_DEEPLINK,
-    (message: SnapyrInAppMessage) => {
-      console.error("RN::: RECEIVED DEEPLINK CALLBACK!!!", message);
-      callback(message);
-    }
-  );
-  // Remove/unsubscribe previous listener, if any
-  _eventListeners.get(SNAPYR_LISTENER_DEEPLINK)?.remove();
-  _eventListeners.set(SNAPYR_LISTENER_DEEPLINK, listener);
-}
+/**
+ * Registers a callback that will be called when Snapyr receives an in-app message.
+ *
+ * Only one callback can be registered at a time. Calling this function for a second time will replace the first callback with the second one.
+ */
+export const onSnapyrInAppMessage = setupEventListener<SnapyrInAppMessage>(
+  SNAPYR_LISTENER_INAPP_MESSAGE
+);
 
-export function onSnapyrDidReceiveNotificationResponse(
-  callback: ({
-    actionIdentifier,
-    userInfo,
-  }: {
-    actionIdentifier: string;
-    userInfo: Record<string, any>;
-  }) => void
-): void {
-  const listener = SnapyrEmitter.addListener(
-    SNAPYR_LISTENER_NOTIFICATION_RESPONSE,
-    (responseData) => {
-      callback(responseData);
-    }
+/**
+ * **Beta** - not yet fully supported for iOS
+ * 
+ * Registers a callback that will be called when Snapyr receives a notification response, i.e. a tap on a notification.
+ *
+ * Only one callback can be registered at a time. Calling this function for a second time will replace the first callback with the second one.
+ */
+export const onSnapyrNotificationResponse =
+  setupEventListener<SnapyrPushNotificationResponsePayload>(
+    SNAPYR_LISTENER_NOTIFICATION_RESPONSE
   );
-  // Remove/unsubscribe previous listener, if any
-  _eventListeners.get(SNAPYR_LISTENER_NOTIFICATION_RESPONSE)?.remove();
-  _eventListeners.set(SNAPYR_LISTENER_NOTIFICATION_RESPONSE, listener);
-}
+
+/**
+ * **Beta** - not yet fully supported for iOS
+ * 
+ * Registers a callback that will be called when Snapyr receives a notification.
+ *
+ * Only one callback can be registered at a time. Calling this function for a second time will replace the first callback with the second one.
+ */
+export const onSnapyrNotificationReceived =
+  setupEventListener<SnapyrPushNotificationPayload>(
+    SNAPYR_LISTENER_NOTIFICATION
+  );
 
 export function configure(
   key: string,
