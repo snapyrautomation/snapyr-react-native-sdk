@@ -15,9 +15,7 @@ public class SnapyrRnSdkPackage implements ReactPackage {
     @NonNull
     @Override
     public List<NativeModule> createNativeModules(@NonNull ReactApplicationContext reactContext) {
-        List<NativeModule> modules = new ArrayList<>();
-        modules.add(new SnapyrRnSdkModule(reactContext));
-        return modules;
+        return Collections.<NativeModule>singletonList(new SnapyrRnSdkModule(reactContext));
     }
 
     @NonNull

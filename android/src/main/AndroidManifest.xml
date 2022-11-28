@@ -1,4 +1,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.reactnativesnapyrrnsdk">
+  package="com.reactnativesnapyrrnsdk">
 
+  <application>
+    <receiver
+      android:name=".SnapyrRnNotificationReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="com.snapyr.sdk.notifications.ACTION_NOTIFICATION_RECEIVED" />
+      </intent-filter>
+    </receiver>
+    <receiver
+      android:name=".SnapyrRnNotificationTappedReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="com.snapyr.sdk.notifications.ACTION_NOTIFICATION_TAPPED" />
+      </intent-filter>
+    </receiver>
+  </application>
 </manifest>
