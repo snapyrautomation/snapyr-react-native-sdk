@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, Button } from 'react-native';
 import { configure, identify, track } from 'snapyr-react-native-sdk';
 
 export default function App() {
@@ -9,12 +9,18 @@ export default function App() {
   React.useEffect(() => {
     console.log('configuring sdk');
     (async function () {
-      const key = await configure('<write-key-here>', {
+      const APIKey = 'USY3SOyIaG4hZz7EUVIUj0sriqu5Zgna';
+      const key = await configure(APIKey, {
         trackApplicationLifecycleEvents: true,
         recordScreenViews: true,
       });
       console.log('configured', key);
-      await identify('test@example.com');
+
+      await identify('testId', {
+        name: 'Testing Name',
+        email: 'test@example.com'
+      });
+
       console.log('identified test@example.com');
       await track('react-native-loaded', {
         rn_client_type: 'local',
@@ -26,7 +32,13 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      <Button
+        title='Send event'
+        onPress={() => {
+          track('button-pressed');
+          console.log('tracked react-native-loaded');
+        }}/>
+        <Text>Result: {result}</Text>
     </View>
   );
 }
