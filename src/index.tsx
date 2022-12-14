@@ -28,6 +28,12 @@ export enum SnapyrEnvironment {
   SnapyrEnvironmentDev,
 }
 
+export enum SnapyrIosPushAuthStatus {
+  authorized = "authorized",
+  denied = "denied",
+  undetermined = "undetermined",
+}
+
 export type SnapyrConfigOptions = {
   trackApplicationLifecycleEvents: boolean;
   recordScreenViews: boolean;
@@ -142,8 +148,6 @@ export const onSnapyrInAppMessage = setupEventListener<SnapyrInAppMessage>(
 );
 
 /**
- * **Beta** - not yet fully supported for iOS
- *
  * Registers a callback that will be called when Snapyr receives a notification response, i.e. a tap on a notification.
  *
  * Only one callback can be registered at a time. Calling this function for a second time will replace the first callback with the second one.
@@ -154,8 +158,6 @@ export const onSnapyrNotificationResponse =
   );
 
 /**
- * **Beta** - not yet fully supported for iOS
- *
  * Registers a callback that will be called when Snapyr receives a notification.
  *
  * Only one callback can be registered at a time. Calling this function for a second time will replace the first callback with the second one.
@@ -164,6 +166,24 @@ export const onSnapyrNotificationReceived =
   setupEventListener<SnapyrPushNotificationPayload>(
     SNAPYR_LISTENER_NOTIFICATION
   );
+
+/**
+ * iOS only - trigger OS prompt to request permission from the user to send push notifications. 
+ * The prompt will display only if the user has not already accepted or denied such a prompt in the past; 
+ * otherwise, this method will immediately return with the push authorization status.
+ * Snapyr push notifications will only work after the user has granted push authorization for this app.
+ */
+export function requestIosPushAuthorization(): Promise<boolean> {
+  // promise resolved with boolean for whether user allowed; or rejected if there was an error during authorization attempt
+  return SnapyrRnSdk.requestPushAuthorization();
+}
+
+/**
+ * iOS only - get the current push authorization status. Push notifications are authorized/enabled only if the result is `SnapyrIosPushAuthStatus.authorized`.
+ */
+export function checkIosPushAuthorization(): Promise<SnapyrIosPushAuthStatus> {
+  return SnapyrRnSdk.checkPushAuthorization();
+}
 
 export function configure(
   key: string,
