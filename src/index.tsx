@@ -37,6 +37,8 @@ export enum SnapyrIosPushAuthStatus {
 export type SnapyrConfigOptions = {
   trackApplicationLifecycleEvents: boolean;
   recordScreenViews: boolean;
+  flushQueueSize: number;
+  debug: boolean;
   snapyrEnvironment: SnapyrEnvironment;
 };
 

@@ -43,6 +43,9 @@ RCT_REMAP_METHOD(configure,
                  withResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject)
 {
+    if ([_options objectForKey:@"debug"]) {
+        [SnapyrSDK debug:true];
+    }
     SnapyrSDKConfiguration *configuration = [SnapyrSDKConfiguration configurationWithWriteKey:key];
     if ([_options objectForKey:@"trackApplicationLifecycleEvents"]) {
         configuration.trackApplicationLifecycleEvents = YES; // Enable this to record certain application events automatically
@@ -50,16 +53,21 @@ RCT_REMAP_METHOD(configure,
     if ([_options objectForKey:@"recordScreenViews"]) {
         configuration.recordScreenViews = YES; // Enable this to record screen views automatically
     }
-    if ([_options objectForKey:@"snapyrEnvironment"]) {
+    if ([_options objectForKey:@"snapyrEnvironment"] != nil) {
         NSNumber *e = [_options valueForKey:@"snapyrEnvironment"];
         // NB this relies on integer-based enums with the same values between React and iOS
         configuration.snapyrEnvironment = (SnapyrEnvironment)e.integerValue; // Test against a Snapyr dev environment *internal only*
     }
+    if ([_options objectForKey:@"flushQueueSize"] != nil) {
+        NSNumber *e = [_options valueForKey:@"flushQueueSize"];
+        configuration.flushAt = [e intValue]; // Enable this to record screen views automatically
+    } else {
+        // default - makes every event flush to network immediately
+        configuration.flushAt = 1;
+    }
     configuration.actionHandler = ^(SnapyrInAppMessage *message){
         [self handleSnapyrInAppMessage:message];
     };
-    // makes every event flush to network immediately
-    configuration.flushAt = 1;
     
     [SnapyrSDK setupWithConfiguration:configuration];
     // Adding first listener kicks off `startObserving` so we're wired into events/notifications, even if JS code hasn't yet requested anything
