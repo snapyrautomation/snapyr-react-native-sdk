@@ -1,7 +1,11 @@
 #import "SnapyrRnSdk.h"
+#import "SnapyrRnNotifManager.h"
 #import <Snapyr/SnapyrSDK.h>
 #import <Snapyr/SnapyrInAppMessage.h>
 #import <Snapyr/SnapyrNotification.h>
+
+static SnapyrRnNotifManager *__receivedNotificationIds = nil;
+static SnapyrRnNotifManager *__respondedNotificationIds = nil;
 
 static SnapyrNotification *__receivedNotification = nil;
 static SnapyrNotification *__responseNotification = nil;
@@ -33,6 +37,9 @@ RCT_EXPORT_MODULE_NO_LOAD(SnapyrRnSdk, SnapyrRnSdk)
      selector:@selector(registeredForRemoteNotificationsWithDeviceToken:)
      name:@"snapyr.registeredForRemoteNotificationsWithDeviceToken"
      object:nil];
+    
+    __receivedNotificationIds = [[SnapyrRnNotifManager alloc] initWithSize:20];
+    __respondedNotificationIds = [[SnapyrRnNotifManager alloc] initWithSize:20];
 }
 
 // See https://reactnative.dev/docs/native-modules-ios
@@ -303,6 +310,9 @@ RCT_EXPORT_METHOD(requestPushAuthorization:(RCTPromiseResolveBlock)resolve
 + (void)didReceiveRemoteNotification:(NSNotification *)notification
 {
     SnapyrNotification *snapyrNotif = notification.userInfo[@"snapyrNotification"];
+    if (![__receivedNotificationIds shouldNotifyForId:@(snapyrNotif.notificationId).stringValue]) {
+        return;
+    }
     // Record of this notification for later forwarding, if RN SDK is initialized after this notification
     __receivedNotification = snapyrNotif;
 
@@ -316,6 +326,9 @@ RCT_EXPORT_METHOD(requestPushAuthorization:(RCTPromiseResolveBlock)resolve
 API_AVAILABLE(ios(10.0))
 {
     SnapyrNotification *snapyrNotif = notification.userInfo[@"snapyrNotification"];
+    if (![__respondedNotificationIds shouldNotifyForId:@(snapyrNotif.notificationId).stringValue]) {
+        return;
+    }
     // Record of this notification for later forwarding, if RN SDK is initialized after this notification
     __responseNotification = snapyrNotif;
     
