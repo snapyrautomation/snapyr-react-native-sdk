@@ -17,12 +17,12 @@ import {
     configure,
     identify,
     track,
-    pushNotificationReceived,
-    pushNotificationTapped,
     onSnapyrInAppMessage,
     trackInAppMessageImpression,
     trackInAppMessageClick,
     trackInAppMessageDismiss,
+    checkIosPushAuthorization,
+    requestIosPushAuthorization,
 } from '@snapyr/react-native-sdk';
 
 // ...
@@ -30,14 +30,6 @@ import {
 await configure('writeKey');
 await identify('userId@here.com', { traits: 'optional' });
 await track('someEvent', { some: 'properties', for: 'example' });
-
-// after receiving a push notification payload, track received metric to Snapyr
-const snapyrData = notification.data?.snapyr;
-await pushNotificationReceived(snapyrData);
-
-// after receiving a push interaction callback, track tapped metric to Snapyr
-const snapyrData = notification.data?.snapyr;
-await pushNotificationTapped(snapyrData);
 
 // --- In-App messaging section (optional) ---
 
@@ -60,7 +52,30 @@ trackInAppMessageClick(currentInAppMessage.actionToken, {exampleExtraProperty: "
 // ... or, if the user dismissed our message, and we haven't recorded any other interaction...
 trackInAppMessageDismiss(currentInAppMessage.actionToken);
 
-// --- End of In-App messaging section ---
+// --- Push notifications section ---
+// On Android, push permissions are enabled by default.
+// On iOS, they need to be explicitly requested from the user. You can check the current push authorization status:
+if (Platform.OS === 'ios') {
+    const authStatus = await checkIosPushAuthorization();
+    if (authStatus == SnapyrIosPushAuthStatus.authorized) {
+        console.log("Push authorized!");
+        pushAuthorized = true;
+    } else {
+        console.log("Push not authorized:", authStatus);
+    }
+}
+
+// When appropriate, call this function to trigger a push permission request from the user:
+if (Platform.OS === 'ios') {
+    // The first time this is called, iOS displays a prompt, and returns true/false depending on the user's response.
+    // On subsequent calls, iOS immediately returns true/false based on the stored value.
+    const didAuthorize = await requestIosPushAuthorization();
+    if (didAuthorize) {
+        console.log("Push permissions granted!");
+    } else {
+        console.log("User rejected push permissions");
+    }
+}
 ```
 
 ## Development
