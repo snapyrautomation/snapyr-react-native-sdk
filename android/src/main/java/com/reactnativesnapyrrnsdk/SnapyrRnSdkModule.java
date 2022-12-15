@@ -55,9 +55,6 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
     public void configure(String withKey, ReadableMap options, Promise promise) {
       try {
         Snapyr.Builder builder = new Snapyr.Builder(this.getCurrentContext(), withKey)
-        .flushQueueSize(1) // makes every event flush to network immediately
-        .trackApplicationLifecycleEvents() // Enable this to record certain application events automatically
-        .recordScreenViews() // Enable this to record screen views automatically
         .enableSnapyrPushHandling() // enable push for Android
         .configureInAppHandling(
           new InAppConfig()
@@ -65,12 +62,32 @@ public class SnapyrRnSdkModule extends ReactContextBaseJavaModule implements Lif
               SnapyrRnInAppHandler.getInstance(this.getReactApplicationContext())
             ));
 
-        if (options != null && options.hasKey("snapyrEnvironment")) {
-          try {
-            ConnectionFactory.Environment env = ConnectionFactory.Environment.values()[options.getInt("snapyrEnvironment")];
-            builder.snapyrEnvironment(env);
-          } catch (Exception e) {
-            Log.e("Snapyr", "Invalid environment provided");
+        if (options != null) {
+          if (options.hasKey("trackApplicationLifecycleEvents") && options.getBoolean("trackApplicationLifecycleEvents")) {
+            builder.trackApplicationLifecycleEvents(); // Enable this to record certain application events automatically
+          }
+
+          if (options.hasKey("recordScreenViews") && options.getBoolean("recordScreenViews")) {
+            builder.recordScreenViews(); // Enable this to record screen views automatically
+          }
+
+          if (options.hasKey("debug") && options.getBoolean("debug")) {
+            builder.logLevel(Snapyr.LogLevel.INFO);
+          }
+
+          if (options.hasKey("flushQueueSize")) {
+            builder.flushQueueSize(options.getInt("flushQueueSize"));
+          } else {
+            builder.flushQueueSize(1); // default - makes every event flush to network immediately
+          }
+
+          if (options.hasKey("snapyrEnvironment")) {
+            try {
+              ConnectionFactory.Environment env = ConnectionFactory.Environment.values()[options.getInt("snapyrEnvironment")];
+              builder.snapyrEnvironment(env);
+            } catch (Exception e) {
+              Log.e("Snapyr", "Invalid environment provided");
+            }
           }
         }
 
