@@ -1,10 +1,46 @@
 #import "SnapyrRnSdk.h"
+#import "SnapyrRnNotifManager.h"
 #import <Snapyr/SnapyrSDK.h>
 #import <Snapyr/SnapyrInAppMessage.h>
+#import <Snapyr/SnapyrNotification.h>
+
+static SnapyrRnNotifManager *__receivedNotificationIds = nil;
+static SnapyrRnNotifManager *__respondedNotificationIds = nil;
+
+static SnapyrNotification *__receivedNotification = nil;
+static SnapyrNotification *__responseNotification = nil;
 
 @implementation SnapyrRnSdk
 
-RCT_EXPORT_MODULE()
+RCT_EXPORT_MODULE_NO_LOAD(SnapyrRnSdk, SnapyrRnSdk)
+
++ (void)load
+{
+    // + load is executed very early on in app lifecycle (at startup, before main app instance is even launched).
+    // Listen to notifications from Snapyr SDK that may be triggered before the RN SDK (or even the RN app itself) is initialized.
+    // We will stash the last received and responded notification record so that we can "replay" them after RN initialization.
+    // This allows for an app launch, triggered by a notification receipt or tap, to pass this data to the RN app
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(didReceiveRemoteNotification:)
+     name:@"snapyr.didReceiveNotification"
+     object:nil];
+    
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(didReceiveNotificationResponse:)
+     name:@"snapyr.didReceiveNotificationResponse"
+     object:nil];
+    
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(registeredForRemoteNotificationsWithDeviceToken:)
+     name:@"snapyr.registeredForRemoteNotificationsWithDeviceToken"
+     object:nil];
+    
+    __receivedNotificationIds = [[SnapyrRnNotifManager alloc] initWithSize:20];
+    __respondedNotificationIds = [[SnapyrRnNotifManager alloc] initWithSize:20];
+}
 
 // See https://reactnative.dev/docs/native-modules-ios
 
@@ -14,6 +50,9 @@ RCT_REMAP_METHOD(configure,
                  withResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject)
 {
+    if ([_options objectForKey:@"debug"]) {
+        [SnapyrSDK debug:true];
+    }
     SnapyrSDKConfiguration *configuration = [SnapyrSDKConfiguration configurationWithWriteKey:key];
     if ([_options objectForKey:@"trackApplicationLifecycleEvents"]) {
         configuration.trackApplicationLifecycleEvents = YES; // Enable this to record certain application events automatically
@@ -21,20 +60,28 @@ RCT_REMAP_METHOD(configure,
     if ([_options objectForKey:@"recordScreenViews"]) {
         configuration.recordScreenViews = YES; // Enable this to record screen views automatically
     }
-    if ([_options objectForKey:@"snapyrEnvironment"]) {
+    if ([_options objectForKey:@"snapyrEnvironment"] != nil) {
         NSNumber *e = [_options valueForKey:@"snapyrEnvironment"];
         // NB this relies on integer-based enums with the same values between React and iOS
         configuration.snapyrEnvironment = (SnapyrEnvironment)e.integerValue; // Test against a Snapyr dev environment *internal only*
     }
+    if ([_options objectForKey:@"flushQueueSize"] != nil) {
+        NSNumber *e = [_options valueForKey:@"flushQueueSize"];
+        configuration.flushAt = [e intValue];
+    } else {
+        // default - makes every event flush to network immediately
+        configuration.flushAt = 1;
+    }
     configuration.actionHandler = ^(SnapyrInAppMessage *message){
         [self handleSnapyrInAppMessage:message];
     };
-    // makes every event flush to network immediately
-    configuration.flushAt = 1;
     
     [SnapyrSDK setupWithConfiguration:configuration];
-    
+    // Adding first listener kicks off `startObserving` so we're wired into events/notifications, even if JS code hasn't yet requested anything
     [self addListener:@"snapyrDidRegister"];
+    
+    // Check for updated push token - if AppDelegate has the requisite code wired up, this will result in the current push token being sent to Snapyr for the currently-identified user
+    [self requestPushTokenIfAuthorized];
     
     resolve(key);
 }
@@ -93,6 +140,45 @@ RCT_EXPORT_METHOD(reset)
     // Do nothing, for now... stub method to maintain compat w/ Android
 }
 
+RCT_EXPORT_METHOD(checkPushAuthorization:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+    [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings){
+        
+        if (settings.authorizationStatus == UNAuthorizationStatusAuthorized) {
+            resolve(@"authorized");
+        } else if (settings.authorizationStatus == UNAuthorizationStatusDenied) {
+            resolve(@"denied");
+        } else {
+            resolve(@"undetermined");
+        }
+    }];
+}
+
+RCT_EXPORT_METHOD(requestPushAuthorization:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+    UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+    
+    // NB: `requestAuthorizationWithOptions...` prompts user for permission and is needed to display alerts/badges/sounds, BUT...
+    // `registerForRemoteNotifications` is what actually triggers APNs registration and the `didRegisterForRemoteNotificationsWithDeviceToken` callback.
+    // `registerForRemoteNotifications` can be called BEFORE requesting authorization to get a push token (but only silent push will work until you get authorization).
+    [center requestAuthorizationWithOptions:(UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge) completionHandler:^(BOOL granted, NSError * _Nullable error) {
+        if(!error) {
+            // This triggers the AppDelegate's `didRegisterForRemoteNotificationsWithDeviceToken:` method if successful.
+            // NB up to client's AppDelegate to actually implement this method and pass back to Snapyr!
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [[UIApplication sharedApplication] registerForRemoteNotifications];
+            });
+            resolve([NSNumber numberWithBool:granted]);
+        } else {
+            NSLog(@"Push registration FAILED");
+            reject(@"error", @"Encountered error during authorization attempt", error);
+        }
+    }];
+}
+
 
 /**
  Native iOS -> React Native events (trigger RN callbacks from native)
@@ -119,29 +205,36 @@ RCT_EXPORT_METHOD(reset)
 // to manage lifecycle. Those class methods use NSNotificationCenter to pass the data along through
 // events; we listen to those events here in the actual instance, where we can then pass data back
 // into React Native.
--(void)startObserving {
+- (void)startObserving {
     // Set up any upstream listeners or background tasks as necessary
     [[NSNotificationCenter defaultCenter]
      addObserver:self
      selector:@selector(handleSnapyrDidRegister:)
-     name:@"snapyrDidRegister"
+     name:@"snapyrRN.didRegister"
      object:nil];
     
     [[NSNotificationCenter defaultCenter]
      addObserver:self
      selector:@selector(handleSnapyrDidReceiveNotification:)
-     name:@"snapyrDidReceiveNotification"
+     name:@"snapyrRN.didReceiveNotification"
      object:nil];
     
     [[NSNotificationCenter defaultCenter]
      addObserver:self
      selector:@selector(handleSnapyrDidReceiveNotificationResponse:)
-     name:@"snapyrDidReceiveNotificationResponse"
+     name:@"snapyrRN.didReceiveNotificationResponse"
      object:nil];
+    
+    if (__receivedNotification) {
+        [self sendEventWithName:@"snapyrDidReceiveNotification" body:[__receivedNotification asDict]];
+    }
+    if (__responseNotification) {
+        [self sendEventWithName:@"snapyrDidReceiveNotificationResponse" body:[__responseNotification asDict]];
+    }
 }
 
 // Will be called when this module's last listener is removed, or on dealloc.
--(void)stopObserving {
+- (void)stopObserving {
     // Remove upstream listeners, stop unnecessary background tasks
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -160,20 +253,30 @@ RCT_EXPORT_METHOD(reset)
 
 - (void)handleSnapyrDidReceiveNotification:(NSNotification *)notification
 {
-    NSDictionary *notif = notification.userInfo[@"notification"];
-    [self sendEventWithName:@"snapyrDidReceiveNotification" body:notif];
+    SnapyrNotification *snapyrNotification = notification.userInfo[@"snapyrNotification"];
+    [self sendEventWithName:@"snapyrDidReceiveNotification" body:[snapyrNotification asDict]];
 }
 
 - (void)handleSnapyrDidReceiveNotificationResponse:(NSNotification *)notification
 {
-    [self sendEventWithName:@"snapyrDidReceiveNotificationResponse" body:notification.userInfo];
+    SnapyrNotification *snapyrNotification = notification.userInfo[@"snapyrNotification"];
+    [self sendEventWithName:@"snapyrDidReceiveNotificationResponse" body:[snapyrNotification asDict]];
 }
 
-
-- (void)handleTest:(NSNotification *)notification
+// Helper - fire a `registerForRemoteNotifications` call IFF the app already has notification authorization
+- (void)requestPushTokenIfAuthorized
 {
-    NSString *notif = notification.userInfo[@"notification"];
-    [self sendEventWithName:@"snapyrTest" body:notif];
+    UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+    [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings){
+        // Only try to get push token if user gave authorization (otherwise, we might "successfully" register the device with Snapyr as having a push token, with a token that can only be used for silent/background notifications
+        if (settings.authorizationStatus == UNAuthorizationStatusAuthorized) {
+            // This triggers the AppDelegate's `didRegisterForRemoteNotificationsWithDeviceToken:` method if successful.
+            // NB up to AppDelegate to actually implement this method and pass back to Snapyr!
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [[UIApplication sharedApplication] registerForRemoteNotifications];
+            });
+        }
+  }];
 }
 
 // Class method the consumer can call when application(_:didRegisterForRemoteNotificationsWithDeviceToken:)
@@ -194,28 +297,55 @@ RCT_EXPORT_METHOD(reset)
     }
     
     [[NSNotificationCenter defaultCenter]
-     postNotificationName:@"snapyrDidRegister"
+     postNotificationName:@"snapyrRN.didRegister"
      object:self
      userInfo:@{@"token" : [hexString copy]}];
 }
 
-+ (void)didReceiveRemoteNotification:(NSDictionary *)notification
+#pragma mark - static notification listeners/forwarders
+// These methods listen for notifications from the Snapyr iOS SDK, and forward them (by sending a new notification) along to instance methods in the Snapyr RN SDK
+
++ (void)didReceiveRemoteNotification:(NSNotification *)notification
 {
+    SnapyrNotification *snapyrNotif = notification.userInfo[@"snapyrNotification"];
+    if (![__receivedNotificationIds shouldNotifyForId:@(snapyrNotif.notificationId).stringValue]) {
+        return;
+    }
+    // Record of this notification for later forwarding, if RN SDK is initialized after this notification
+    __receivedNotification = snapyrNotif;
+
     [[NSNotificationCenter defaultCenter]
-     postNotificationName:@"snapyrDidReceiveNotification"
+     postNotificationName:@"snapyrRN.didReceiveNotification"
      object:self
-     userInfo:@{@"notification": notification}];
+     userInfo:@{@"snapyrNotification": snapyrNotif}];
 }
 
-+ (void)didReceiveNotificationResponse:(UNNotificationResponse *)response
++ (void)didReceiveNotificationResponse:(NSNotification *)notification
 API_AVAILABLE(ios(10.0))
 {
-    NSString *actionIdentifier = response.actionIdentifier;
-    NSDictionary *userInfo = [response.notification.request.content.userInfo copy];
+    SnapyrNotification *snapyrNotif = notification.userInfo[@"snapyrNotification"];
+    if (![__respondedNotificationIds shouldNotifyForId:@(snapyrNotif.notificationId).stringValue]) {
+        return;
+    }
+    // Record of this notification for later forwarding, if RN SDK is initialized after this notification
+    __responseNotification = snapyrNotif;
+    
+    NSString *actionIdentifier = notification.userInfo[@"actionIdentifier"];
+    
     [[NSNotificationCenter defaultCenter]
-     postNotificationName:@"snapyrDidReceiveNotificationResponse"
+     postNotificationName:@"snapyrRN.didReceiveNotificationResponse"
      object:self
-     userInfo:@{@"actionIdentifier": actionIdentifier, @"userInfo": userInfo}];
+     userInfo:@{@"actionIdentifier": actionIdentifier, @"snapyrNotification": snapyrNotif}];
+}
+
++ (void)registeredForRemoteNotificationsWithDeviceToken:(NSNotification *)notification
+{
+    NSString *tokenString = notification.userInfo[@"tokenString"];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:@"snapyrRN.registeredForRemoteNotificationsWithDeviceToken"
+     object:self
+     userInfo:@{@"tokenString": tokenString}];
 }
 
 + (BOOL)requiresMainQueueSetup
