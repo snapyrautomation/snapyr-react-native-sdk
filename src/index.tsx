@@ -176,6 +176,11 @@ export const onSnapyrNotificationReceived =
  * Snapyr push notifications will only work after the user has granted push authorization for this app.
  */
 export function requestIosPushAuthorization(): Promise<boolean> {
+  if (Platform.OS !== 'ios') {
+    throw new Error(
+      "Function valid only for iOS. Try wrapping call in `if (Platform.OS === 'ios') {...}"
+    );
+  }
   // promise resolved with boolean for whether user allowed; or rejected if there was an error during authorization attempt
   return SnapyrRnSdk.requestPushAuthorization();
 }
@@ -184,6 +189,11 @@ export function requestIosPushAuthorization(): Promise<boolean> {
  * iOS only - get the current push authorization status. Push notifications are authorized/enabled only if the result is `SnapyrIosPushAuthStatus.authorized`.
  */
 export function checkIosPushAuthorization(): Promise<SnapyrIosPushAuthStatus> {
+  if (Platform.OS !== 'ios') {
+    throw new Error(
+      "Function valid only for iOS. Try wrapping call in `if (Platform.OS === 'ios') {...}"
+    );
+  }
   return SnapyrRnSdk.checkPushAuthorization();
 }
 
