@@ -178,7 +178,7 @@ export const onSnapyrNotificationReceived =
 export function requestIosPushAuthorization(): Promise<boolean> {
   if (Platform.OS !== 'ios') {
     throw new Error(
-      "Function valid only for iOS. Try wrapping call in `if (Platform.OS === 'ios') {...}"
+      "Function valid only for iOS. Try wrapping call in `if (Platform.OS === 'ios') {...}`"
     );
   }
   // promise resolved with boolean for whether user allowed; or rejected if there was an error during authorization attempt
@@ -191,7 +191,7 @@ export function requestIosPushAuthorization(): Promise<boolean> {
 export function checkIosPushAuthorization(): Promise<SnapyrIosPushAuthStatus> {
   if (Platform.OS !== 'ios') {
     throw new Error(
-      "Function valid only for iOS. Try wrapping call in `if (Platform.OS === 'ios') {...}"
+      "Function valid only for iOS. Try wrapping call in `if (Platform.OS === 'ios') {...}`"
     );
   }
   return SnapyrRnSdk.checkPushAuthorization();

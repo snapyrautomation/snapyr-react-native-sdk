@@ -70,7 +70,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging'
     // For SDK dev, you can set an ext value `SnapyrRnSdk_omitSnapyrAndroidSDK` = true in your test project's app/build.gradle
     // and manually include the Snapyr Android SDK. See the Android SDK build.gradle files for more information
-    if (!safeExtGet('SnapyrRnSdk_omitSnapyrAndroidSDK', false)) {
+    def omitSnapyrAndroidSDK = safeExtGet('SnapyrRnSdk_omitSnapyrAndroidSDK', false)
+    if (!(omitSnapyrAndroidSDK == true || omitSnapyrAndroidSDK == 'true')) {
         implementation 'com.snapyr.sdk.android:snapyr:1.2.2-beta6'
     } else {
         logger.warn("===========================================================")
