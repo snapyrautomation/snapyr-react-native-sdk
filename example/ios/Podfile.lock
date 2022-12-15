@@ -220,9 +220,9 @@ PODS:
   - React-jsinspector (0.69.3)
   - React-logger (0.69.3):
     - glog
-  - react-native-snapyr-rn-sdk (1.2.0-beta1):
+  - react-native-snapyr-rn-sdk (1.2.0-beta2):
     - React-Core
-    - Snapyr (~> 1.1.1)
+    - Snapyr (~> 1.2.0-beta1)
   - React-perflogger (0.69.3)
   - React-RCTActionSheet (0.69.3):
     - React-Core/RCTActionSheetHeaders (= 0.69.3)
@@ -291,7 +291,7 @@ PODS:
     - React-perflogger (= 0.69.3)
   - RNCPushNotificationIOS (1.10.1):
     - React-Core
-  - Snapyr (1.1.1)
+  - Snapyr (1.2.0-beta1)
   - Yoga (1.14.0)
 
 DEPENDENCIES:
@@ -427,7 +427,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 1842ca163b160aeb224d2c65b2a60c393b273c67
   React-jsinspector: bb2605f98aada5d81f3494690da3ef3b4ff3b716
   React-logger: 23a50ef4c18bf9adbb51e2c979318e6b3a2e44a1
-  react-native-snapyr-rn-sdk: 8b7e4d8fc49642031438fa3cc94f16bbda2fce00
+  react-native-snapyr-rn-sdk: 34d1093bdd9a8f4516dd5e98a70c7f0ba52abc59
   React-perflogger: 39d2ba8cbcac54d1bb1d9a980dab348e96aef467
   React-RCTActionSheet: b1ad907a2c8f8e4d037148ca507b7f2d6ab1c66d
   React-RCTAnimation: 914a9ba46fb6e7376f7709c7ce825d53b47ca2ee
@@ -441,7 +441,7 @@ SPEC CHECKSUMS:
   React-runtimeexecutor: 607eb048e22a16388c908ee1f6644200e8d1e19b
   ReactCommon: af7636436b382db7cde4583bbd642f0978e6e3ed
   RNCPushNotificationIOS: 87b8d16d3ede4532745e05b03c42cff33a36cc45
-  Snapyr: 3b5f6560cbddb5680f1c6b45e9d724342c92cad0
+  Snapyr: d7d2e78949ac75f49557d74edfa22a80319f0873
   Yoga: 44c64131616253fa83366295acdbce3d14926041
 
 PODFILE CHECKSUM: 6f5af3c416d6954937a4d2d95f17e5c40f12079d
