@@ -37,7 +37,10 @@ public abstract class SnapyrRnReceiverBase extends BroadcastReceiver {
                                 }
                             });
                     // Init the React context - this allows JS code to run, so the emitted events can be received on the JS side. NB if starting from non-running app state, only app-level JS code will run - i.e. typically `index.js` code will run but not `App.jsx`, which is run within an Activity
-                    reactInstanceManager.createReactContextInBackground();
+
+                    // NB: disabling this for now as it's not yet being used, and can cause unexpected behavior in some apps.
+                    // TODO: make configurable, then re-enable based on config
+                    // reactInstanceManager.createReactContextInBackground();
                 } else {
                     // React context is ready - send the event immediately
                     reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
