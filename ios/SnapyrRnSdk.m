@@ -67,7 +67,7 @@ RCT_REMAP_METHOD(configure,
     }
     if ([_options objectForKey:@"flushQueueSize"] != nil) {
         NSNumber *e = [_options valueForKey:@"flushQueueSize"];
-        configuration.flushAt = [e intValue]; // Enable this to record screen views automatically
+        configuration.flushAt = [e intValue];
     } else {
         // default - makes every event flush to network immediately
         configuration.flushAt = 1;
