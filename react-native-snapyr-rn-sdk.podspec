@@ -16,5 +16,5 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,m,mm}"
 
   s.dependency "React-Core"
-  s.dependency "Snapyr", '~> 1.1.1'
+  s.dependency "Snapyr", '~> 1.2.0-beta1'
 end

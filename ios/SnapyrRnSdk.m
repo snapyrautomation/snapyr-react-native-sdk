@@ -160,16 +160,14 @@ RCT_EXPORT_METHOD(requestPushAuthorization:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-//    [center auth]
     
     // NB: `requestAuthorizationWithOptions...` prompts user for permission and is needed to display alerts/badges/sounds, BUT...
     // `registerForRemoteNotifications` is what actually triggers APNs registration and the `didRegisterForRemoteNotificationsWithDeviceToken` callback.
     // `registerForRemoteNotifications` can be called BEFORE requesting authorization to get a push token (but only silent push will work until you get authorization).
-    // might want to do this early in swizzling to get device token, then allow client code to request authorization later?
     [center requestAuthorizationWithOptions:(UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge) completionHandler:^(BOOL granted, NSError * _Nullable error) {
         if(!error) {
             // This triggers the AppDelegate's `didRegisterForRemoteNotificationsWithDeviceToken:` method if successful.
-            // NB up to AppDelegate to actually implement this method and pass back to Snapyr!
+            // NB up to client's AppDelegate to actually implement this method and pass back to Snapyr!
             dispatch_async(dispatch_get_main_queue(), ^{
                 [[UIApplication sharedApplication] registerForRemoteNotifications];
             });
