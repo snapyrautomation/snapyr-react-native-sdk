@@ -29,9 +29,9 @@ export enum SnapyrEnvironment {
 }
 
 export enum SnapyrIosPushAuthStatus {
-  authorized = "authorized",
-  denied = "denied",
-  undetermined = "undetermined",
+  authorized = 'authorized',
+  denied = 'denied',
+  undetermined = 'undetermined',
 }
 
 export type SnapyrConfigOptions = {
@@ -170,8 +170,8 @@ export const onSnapyrNotificationReceived =
   );
 
 /**
- * iOS only - trigger OS prompt to request permission from the user to send push notifications. 
- * The prompt will display only if the user has not already accepted or denied such a prompt in the past; 
+ * iOS only - trigger OS prompt to request permission from the user to send push notifications.
+ * The prompt will display only if the user has not already accepted or denied such a prompt in the past;
  * otherwise, this method will immediately return with the push authorization status.
  * Snapyr push notifications will only work after the user has granted push authorization for this app.
  */
