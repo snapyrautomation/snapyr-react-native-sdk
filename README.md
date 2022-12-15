@@ -23,6 +23,8 @@ import {
     trackInAppMessageDismiss,
     checkIosPushAuthorization,
     requestIosPushAuthorization,
+    onSnapyrNotificationReceived,
+    onSnapyrNotificationResponse,
 } from '@snapyr/react-native-sdk';
 
 // ...
@@ -76,6 +78,34 @@ if (Platform.OS === 'ios') {
         console.log("User rejected push permissions");
     }
 }
+
+// Register a callback to be triggered when a push notification is received on the device
+onSnapyrNotificationReceived((notification: SnapyrPushNotificationPayload) => {
+    console.log("Push notification received!", {
+        'notificationId': notification.notificationId,
+        'title': notification.titleText,
+        'subtitle': notification.subtitleText,
+        'content': notification.contentText,
+        'imageUrl': notification.imageUrl,
+        'deepLinkUrl': notification.deepLinkUrl,
+    });
+});
+
+// Register a callback to be triggered when there is a response to a push notification, i.e. when the user taps a notification
+onSnapyrNotificationResponse((notification: SnapyrPushNotificationResponsePayload) => {
+    console.log("Push notification response received!", {
+        'notificationId': notification.notificationId,
+        'title': notification.titleText,
+        'subtitle': notification.subtitleText,
+        'content': notification.contentText,
+        'imageUrl': notification.imageUrl,
+        'deepLinkUrl': notification.deepLinkUrl,
+    });
+}, {
+    // optional - setting this to true will cause the SDK to record any push response that may have occurred before the JS code finished initializing / before we registered our callback.
+    // this is useful to be able to react to a push notification tap that launched the app, as the OS / native code will process the tap before React Native initialization completes
+    fireQueuedPayloads: true
+});
 ```
 
 ## Development
