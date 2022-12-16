@@ -72,7 +72,7 @@ dependencies {
     // and manually include the Snapyr Android SDK. See the Android SDK build.gradle files for more information
     def omitSnapyrAndroidSDK = safeExtGet('SnapyrRnSdk_omitSnapyrAndroidSDK', false)
     if (!(omitSnapyrAndroidSDK == true || omitSnapyrAndroidSDK == 'true')) {
-        implementation 'com.snapyr.sdk.android:snapyr:1.2.2-beta6'
+        implementation 'com.snapyr.sdk.android:snapyr:1.2.2'
     } else {
         logger.warn("===========================================================")
         logger.warn("Snapyr RN: OMITTING ANDROID SDK! Consuming project must include Snapyr")
